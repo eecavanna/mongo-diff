@@ -4,6 +4,28 @@
 
 Those collections can reside in either a single database or two separate databases (even across servers).
 
+```mermaid
+graph LR
+    script[["mongo_diff.py"]]
+    result["List of<br>differences"]
+
+    subgraph s1 \[Server]
+        subgraph d1 \[Database]
+            collection_a[("Collection A")]
+        end
+    end
+
+    subgraph s2 \[Server]
+        subgraph d2 \[Database]
+            collection_b[("Collection B")]
+        end
+    end
+
+    collection_a --> script
+    collection_b --> script
+    script --> result
+```
+
 ## Usage
 
 ### Install dependencies
