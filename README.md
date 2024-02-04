@@ -1,6 +1,6 @@
 # mongo-diff
 
-`mongo-diff` is a command-line script people can use to compare two MongoDB collections.
+`mongo-diff` is a command-line tool people can use to compare two MongoDB collections.
 
 Those collections can reside in either a single database or two separate databases (even across servers).
 
@@ -28,29 +28,49 @@ graph LR
 
 ## Usage
 
-### Install dependencies
+### 1. (Optional) Create environment variables.
 
-You can install the Python packages upon which this script depends, by running:
+Part of running `mongo-diff` involves providing MongoDB connection strings to it. Since MongoDB connection strings
+sometimes contain sensitive information, I recommend storing them in **environment variables** instead of specifying
+them via CLI options to `mongo-diff`.
 
-```shell
-python -m pip install typer rich dictdiffer pymongo
+> I think that will make it less likely that they are accidentally included in copy/pasted console output or in
+> technical demonstrations.
+
+`mongo-diff` is pre-programmed to look for two environment variables: `MONGO_URI_A` and `MONGO_URI_B`.
+
+> You can learn more about those environment variables in the `--help` snippet below.
+
+You can create those environment variables by running the following commands
+(replacing the example connection strings with real ones):
+
+```shell  
+$ export MONGO_URI_A='mongodb://localhost:27017'
+$ export MONGO_URI_B='mongodb://username:password@host.example.com:22222'
 ```
 
-- [`typer`](https://typer.tiangolo.com/): CLI framework (`typer` is to `click` as `fastapi` is to `flask`)
-- [`rich`](https://rich.readthedocs.io/en/stable/index.html): To format console output
-- [`dictdiffer`](https://dictdiffer.readthedocs.io/en/latest/): To compare dictionaries
-- [`pymongo`](https://pymongo.readthedocs.io/en/stable/): To access MongoDB servers
+> Note: That will only create those environment variables in the current shell process. You can persist them by adding
+> those same commands to your shell initialization script (e.g. `~/.zshrc`).
 
-### Create environment variables
+### 2. Set up virtual environment.
 
-See the `--help` snippet below for documentation about the `MONGO_URI_A` and `MONGO_URI_B` environment variables.
+```shell
+# If you don't have Poetry installed yet...
+$ pipx install poetry
 
-### Run the script
+# Create a Poetry virtual environment and attach to its shell:
+$ poetry shell
 
-Run the script as shown in the `--help` snippet below.
+# At the Poetry virtual environment's shell, install the project's production dependencies:
+$ poetry install --only main
+```
+
+### 3. Use the tool.
+
+At the Poetry virtual environment's shell, run the `mongo_diff/mongo_diff.py` script as shown in the `--help` snippet below.
 
 ```console
-$ python mongo_diff.py --help
+$ python mongo_diff/mongo_diff.py --help
 
  Usage: mongo_diff.py [OPTIONS]
 
@@ -113,20 +133,9 @@ $ python mongo_diff.py --help
 
 > Note: The above `--help` snippet was captured from a terminal window whose width was 80 pixels.
 
-#### Example invocation
+#### Example output
 
-Here's an example invocation of the script:
-
-```console
-# (Optional) Create environment variables containing MongoDB connection strings.  
-$ export MONGO_URI_A='mongodb://localhost:27017'
-$ export MONGO_URI_B='mongodb://username:password@host.example.com:22222'
-
-# Run the script.
-$ python mongo_diff.py --database-name-a company --collection-name-a employees
-```
-
-While the script compares the collections, it will display the **differences** it detects; like this:
+As the tool compares the collections, it will display the **differences** it detects; like this:
 
 ```console
 Documents differ between collections: id=1,id=1. Differences: [('change', 'name', ('Joe', 'Joseph'))]
@@ -135,7 +144,7 @@ Document exists in collection A only: id=4
 Document exists in collection B only: id=5
 ```
 
-When the script finishes comparing the collections, it will display a **summary** of the situation; like this:
+When the tool finishes comparing the collections, it will display a **summary** of the result; like this:
 
 ```console
                          Result                         
@@ -150,4 +159,31 @@ When the script finishes comparing the collections, it will display a **summary*
 ├───────────────────────────────────────────┼──────────┤
 │ Documents that differ between collections │        1 │
 ╰───────────────────────────────────────────┴──────────╯
+```
+
+## Development
+
+We use [Poetry](https://python-poetry.org/) to both (a) manage dependencies and (b) publish packages to PyPI.
+
+- `pyproject.toml`: Configuration file for Poetry and other tools (was generated via `$ poetry init`)
+- `poetry.lock`: List of dependencies, direct and indirect (was generated via `$ poetry update`)
+
+### Create virtual environment
+
+Create a Poetry virtual environment and attach to its shell:
+
+```shell
+poetry shell
+```
+
+> You can see information about the Poetry virtual environment by running: `$ poetry env info`
+
+> You can detach from the Poetry virtual environment's shell by running: `$ exit`
+
+### Install dependencies
+
+At the Poetry virtual environment's shell, install the project's dependencies:
+
+```shell
+poetry install
 ```
