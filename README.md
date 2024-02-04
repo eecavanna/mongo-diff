@@ -27,7 +27,7 @@ See the `--help` snippet below for documentation about the `MONGO_URI_A` and `MO
 
 Run the script as shown in the `--help` snippet below.
 
-```
+```shell
 $ python diff_collections.py --help
                                                                                      
  Usage: diff_collections.py [OPTIONS]                                                
@@ -86,7 +86,7 @@ $ python diff_collections.py --help
 
 The script will display the comparison result on the console; for example:
 
-```
+```shell
                          Result                         
 ╭───────────────────────────────────────────┬──────────╮
 │ Description                               │ Quantity │
