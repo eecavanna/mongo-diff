@@ -49,7 +49,7 @@ See the `--help` snippet below for documentation about the `MONGO_URI_A` and `MO
 
 Run the script as shown in the `--help` snippet below.
 
-```shell
+```console
 $ python mongo_diff.py --help
 
  Usage: mongo_diff.py [OPTIONS]
@@ -59,7 +59,10 @@ $ python mongo_diff.py --help
  databases (even across servers).
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --include-id    --no-include-id      Includes the `_id` field when comparing │
+│                                      documents.                              │
+│                                      [default: no-include-id]                │
+│ --help                               Show this message and exit.             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Collection A ───────────────────────────────────────────────────────────────╮
 │ *  --mongo-uri-a                    TEXT  Connection string for accessing    │
@@ -112,7 +115,7 @@ $ python mongo_diff.py --help
 
 The script will display the comparison result on the console; for example:
 
-```shell
+```console
                          Result                         
 ╭───────────────────────────────────────────┬──────────╮
 │ Description                               │ Quantity │
