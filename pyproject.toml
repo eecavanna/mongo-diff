@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "mongo-diff"
+version = "0.1.0"
+description = "Compare MongoDB collections from the command line."
+authors = []
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+# We use `typer` as a CLI framework (it's like "click", but with types).
+# Docs: https://typer.tiangolo.com/
+typer = "^0.9.0"
+# We use `rich` to format console output.
+# Docs: https://rich.readthedocs.io/en/stable/index.html
+rich = "^13.7.0"
+# We use `dictdiffer` to compare Python dictionaries.
+# Docs: https://dictdiffer.readthedocs.io/en/latest/
+dictdiffer = "^0.9.0"
+# We use `pymongo` to communicate with MongoDB servers.
+# Docs: (https://pymongo.readthedocs.io/en/stable/
+pymongo = "^4.6.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
