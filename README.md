@@ -113,7 +113,29 @@ $ python mongo_diff.py --help
 
 > Note: The above `--help` snippet was captured from a terminal window whose width was 80 pixels.
 
-The script will display the comparison result on the console; for example:
+#### Example invocation
+
+Here's an example invocation of the script:
+
+```console
+# (Optional) Create environment variables containing MongoDB connection strings.  
+$ export MONGO_URI_A='mongodb://localhost:27017'
+$ export MONGO_URI_B='mongodb://username:password@host.example.com:22222'
+
+# Run the script.
+$ python mongo_diff.py --database-name-a company --collection-name-a employees
+```
+
+While the script compares the collections, it will display the **differences** it detects; like this:
+
+```console
+Documents differ between collections: id=1,id=1. Differences: [('change', 'name', ('Joe', 'Joseph'))]
+Document exists in collection A only: id=2
+Document exists in collection A only: id=4
+Document exists in collection B only: id=5
+```
+
+When the script finishes comparing the collections, it will display a **summary** of the situation; like this:
 
 ```console
                          Result                         
