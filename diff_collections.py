@@ -22,6 +22,7 @@ class Report:
         self.num_documents_that_differ_across_collections = 0
 
     def get_summary(self):
+        r"""Returns a summary of the report."""
         summary = "\n".join([
             f'Total number of documents in collection A: {self.num_documents_in_collection_a}',
             f'Total number of documents in collection B: {self.num_documents_in_collection_b}',
@@ -141,17 +142,19 @@ def diff(
     collection_b = collections[1]
 
     # Initialize the report we will display later.
+    num_documents_in_collection_a = collection_a.count_documents({})
+    num_documents_in_collection_b = collection_b.count_documents({})
     report = Report(collection_a.count_documents({}), collection_b.count_documents({}))
 
     # Set up the progress bar functionality.
     with Progress() as progress:
-        # Compare the collections, using the first collection as the reference.
+        # Compare the collections, using collection A as the reference.
         #
         # Note: In this stage, we get each document from collection A and check whether it exists in collection B.
         #       If it does, we compare the two documents and display any differences. If it doesn't, we display the
         #       identifier value from collection A (i.e. the identifier value we failed to find in collection B).
         #
-        task_a = progress.add_task("Processing collection A", total=report.num_documents_in_collection_a)
+        task_a = progress.add_task("Processing collection A", total=num_documents_in_collection_a)
         for document_a in collection_a.find():
             # Check whether a document having the same identifier value exists in collection B.
             identifier_value_a = document_a[identifier_field_name_a]
@@ -175,12 +178,15 @@ def diff(
             # Advance the progress bar by 1.
             progress.update(task_a, advance=1)
 
-        # Compare the collections, using the second collection as the reference.
+        # Compare the collections, using collection B as the reference.
         #
-        # Next, get each document from collection B and check whether it exists in collection A.
-        # If it doesn't, display its identifier value.
+        # Note: In this stage, we get each document from collection B and check whether it exists in collection B.
+        #       If it does, we do nothing, since we would have already checked whether the two documents match during
+        #       the previous stage (note that this is done under the assumption that the contents of the collections
+        #       do not change while this script is running). If it doesn't exist in collection A, we display the
+        #       identifier value from collection B (i.e. the identifier value we failed to find in collection A).
         #
-        task_b = progress.add_task("Processing collection B", total=report.num_documents_in_collection_b)
+        task_b = progress.add_task("Processing collection B", total=num_documents_in_collection_b)
         for document_b in collection_b.find():
             # Check whether a document having the same identifier value exists in collection A.
             identifier_value_b = document_b[identifier_field_name_b]
@@ -195,7 +201,7 @@ def diff(
             # Advance the progress bar by 1.
             progress.update(task_b, advance=1)
 
-        # Display a summary of the result.
+        # Display a summary of the result report.
         rprint("\n[bold blue]Result (summary):[/bold blue]")
         rprint(report.get_summary() + "\n")
 
