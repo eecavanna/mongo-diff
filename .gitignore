@@ -1,0 +1,6 @@
+# JetBrains IDE files.
+/.idea
+
+# Python virtual environment.
+/venv
+/.venv
