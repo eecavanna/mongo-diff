@@ -28,9 +28,9 @@ See the `--help` snippet below for documentation about the `MONGO_URI_A` and `MO
 Run the script as shown in the `--help` snippet below.
 
 ```shell
-$ python diff_collections.py --help
+$ python mongo_diff.py --help
                                                                                      
- Usage: diff_collections.py [OPTIONS]                                                
+ Usage: mongo_diff.py [OPTIONS]                                                
                                                                                      
  Compare two MongoDB collections, displaying their differences on the console.       
  Those collections can reside in either a single database or two separate databases  

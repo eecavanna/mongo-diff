@@ -8,6 +8,7 @@ from rich.progress import Progress
 from rich import box
 
 app = typer.Typer(
+    help="Compare MongoDB collections with one another.",
     add_completion=False,  # hides the shell completion options from `--help` output
 )
 
@@ -62,8 +63,8 @@ class Result:
         return table
 
 
-@app.command()
-def diff(
+@app.command("diff-collections")
+def diff_collections(
         mongo_uri_a: Annotated[str, typer.Option(
             envvar="MONGO_URI_A",
             help="Connection string for accessing the MongoDB server containing collection A",
