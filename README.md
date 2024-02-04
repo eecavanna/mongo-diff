@@ -77,12 +77,19 @@ $ python diff_collections.py --help
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
-When the script is done running, the console will display a report that looks like this:
+The script will display the comparison result on the console; for example:
 
-```yaml
-Total number of documents in collection A: 4
-Total number of documents in collection B: 3
-Number of documents that exist only in collection A: 2
-Number of documents that exist only in collection B: 1
-Number of documents that differ between collections: 1
+```
+                         Result                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Description                               ┃ Quantity ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ Documents in collection A                 │        4 │
+│ Documents in collection B                 │        3 │
+├───────────────────────────────────────────┼──────────┤
+│ Documents in collection A only            │        2 │
+│ Documents in collection B only            │        1 │
+├───────────────────────────────────────────┼──────────┤
+│ Documents that differ between collections │        1 │
+└───────────────────────────────────────────┴──────────┘
 ```
