@@ -2,35 +2,62 @@ import dictdiffer
 import typer
 from typing_extensions import Annotated
 from pymongo import MongoClient, timeout
-from rich import print as rprint
+from rich.console import Console
+from rich.table import Table, Column
 from rich.progress import Progress
 
 app = typer.Typer(
     add_completion=False,  # hides the shell completion options from `--help` output
 )
 
+# Instantiate a Rich console for fancy console output.
+# Reference: https://rich.readthedocs.io/en/stable/console.html
+console = Console()
 
-class Report:
-    r"""A report of the differences."""
+
+class Result:
+    r"""The result of the comparison."""
 
     def __init__(self, num_documents_in_collection_a: int, num_documents_in_collection_b: int):
-        r"""Initializes the report."""
+        r"""Initializes the result."""
         self.num_documents_in_collection_a = num_documents_in_collection_a
         self.num_documents_in_collection_b = num_documents_in_collection_b
         self.num_documents_in_collection_a_only = 0
         self.num_documents_in_collection_b_only = 0
         self.num_documents_that_differ_across_collections = 0
 
-    def get_summary(self):
-        r"""Returns a summary of the report."""
-        summary = "\n".join([
-            f'Total number of documents in collection A: {self.num_documents_in_collection_a}',
-            f'Total number of documents in collection B: {self.num_documents_in_collection_b}',
-            f'Number of documents that exist only in collection A: {self.num_documents_in_collection_a_only}',
-            f'Number of documents that exist only in collection B: {self.num_documents_in_collection_b_only}',
-            f'Number of documents that differ between collections: {self.num_documents_that_differ_across_collections}'
-        ])
-        return summary
+    @staticmethod
+    def colorize_if(raw_string: str, condition: bool, color: str):
+        return f"[{color}]{raw_string}[/{color}]" if condition else raw_string
+
+    def get_summary_table(self, title: str | None = "Result") -> Table:
+        r"""
+        Returns a Rich Table summarizing the result.
+
+        Reference: https://rich.readthedocs.io/en/stable/tables.html
+        """
+        table = Table("Description", Column(header="Quantity", justify="right"),
+                      title=title,
+                      highlight=True)
+        table.add_row("Documents in collection A",
+                      str(self.num_documents_in_collection_a))
+        table.add_row("Documents in collection B",
+                      str(self.num_documents_in_collection_b))
+        table.add_section()
+        table.add_row("Documents in collection A [bold]only[/bold]",
+                      self.colorize_if(raw_string=str(self.num_documents_in_collection_a_only),
+                                       condition=self.num_documents_in_collection_a_only > 0,
+                                       color="red"))
+        table.add_row("Documents in collection B [bold]only[/bold]",
+                      self.colorize_if(raw_string=str(self.num_documents_in_collection_b_only),
+                                       condition=self.num_documents_in_collection_b_only > 0,
+                                       color="red"))
+        table.add_section()
+        table.add_row("Documents that differ between collections",
+                      self.colorize_if(raw_string=str(self.num_documents_that_differ_across_collections),
+                                       condition=self.num_documents_that_differ_across_collections > 0,
+                                       color="red"))
+        return table
 
 
 @app.command()
@@ -119,7 +146,7 @@ def diff(
         with (timeout(5)):  # if any message exchange takes > 5 seconds, this will raise an exception
 
             (host, port_number) = mongo_client.address
-            rprint(f'Connecting to MongoDB server: "{host}:{port_number}"')
+            console.print(f'Connecting to MongoDB server: "{host}:{port_number}"')
 
             # Check whether we can access the MongoDB server.
             mongo_client.server_info()  # raises an exception if it fails
@@ -144,17 +171,18 @@ def diff(
     # Initialize the report we will display later.
     num_documents_in_collection_a = collection_a.count_documents({})
     num_documents_in_collection_b = collection_b.count_documents({})
-    report = Report(collection_a.count_documents({}), collection_b.count_documents({}))
+    report = Result(collection_a.count_documents({}), collection_b.count_documents({}))
 
     # Set up the progress bar functionality.
-    with Progress() as progress:
+    with Progress(console=console) as progress:
         # Compare the collections, using collection A as the reference.
         #
         # Note: In this stage, we get each document from collection A and check whether it exists in collection B.
         #       If it does, we compare the two documents and display any differences. If it doesn't, we display the
         #       identifier value from collection A (i.e. the identifier value we failed to find in collection B).
         #
-        task_a = progress.add_task("Processing collection A", total=num_documents_in_collection_a)
+        task_a = progress.add_task("Comparing collections, using collection A as reference",
+                                   total=num_documents_in_collection_a)
         for document_a in collection_a.find():
             # Check whether a document having the same identifier value exists in collection B.
             identifier_value_a = document_a[identifier_field_name_a]
@@ -166,14 +194,14 @@ def diff(
                 differences = list(differences_generator)
                 if len(differences) > 0:
                     report.num_documents_that_differ_across_collections += 1
-                    rprint(f"Documents differ across collections. "
-                           f"{identifier_field_name_a}={identifier_value_a},"
-                           f"{identifier_field_name_b}={document_b[identifier_field_name_b]}. "
-                           f"Differences: {list(differences)}")
+                    console.print(f"Documents differ between collections: "
+                                  f"{identifier_field_name_a}={identifier_value_a},"
+                                  f"{identifier_field_name_b}={document_b[identifier_field_name_b]}. "
+                                  f"Differences: {list(differences)}")
             else:
                 report.num_documents_in_collection_a_only += 1
-                rprint(f"Document exists in collection A only: "
-                       f"{identifier_field_name_a}={document_a[identifier_field_name_a]}")
+                console.print(f"Document exists in collection A only: "
+                              f"{identifier_field_name_a}={document_a[identifier_field_name_a]}")
 
             # Advance the progress bar by 1.
             progress.update(task_a, advance=1)
@@ -186,7 +214,8 @@ def diff(
         #       do not change while this script is running). If it doesn't exist in collection A, we display the
         #       identifier value from collection B (i.e. the identifier value we failed to find in collection A).
         #
-        task_b = progress.add_task("Processing collection B", total=num_documents_in_collection_b)
+        task_b = progress.add_task("Comparing collections, using collection B as reference",
+                                   total=num_documents_in_collection_b)
         for document_b in collection_b.find():
             # Check whether a document having the same identifier value exists in collection A.
             identifier_value_b = document_b[identifier_field_name_b]
@@ -195,15 +224,16 @@ def diff(
             # If such a document exists in collection B, compare it to the one from collection A.
             if document_a is None:
                 report.num_documents_in_collection_b_only += 1
-                rprint(f"Document exists in collection B only: "
-                       f"{identifier_field_name_b}={document_b[identifier_field_name_b]}")
+                console.print(f"Document exists in collection B only: "
+                              f"{identifier_field_name_b}={document_b[identifier_field_name_b]}")
 
             # Advance the progress bar by 1.
             progress.update(task_b, advance=1)
 
-        # Display a summary of the result report.
-        rprint("\n[bold blue]Result (summary):[/bold blue]")
-        rprint(report.get_summary() + "\n")
+    # Display a table summarizing the result.
+    console.print()
+    console.print(report.get_summary_table())
+    console.print()
 
 
 if __name__ == "__main__":
