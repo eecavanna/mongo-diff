@@ -139,6 +139,9 @@ def diff_collections(
     identifier_field_name_b = identifier_field_name_a if identifier_field_name_b is None else identifier_field_name_b
     if mongo_uri_b is None:
         mongo_uri_b = mongo_uri_a
+
+    # If the two connection strings match one another, force `is_direct_connection_b` to match `is_direct_connection_a`.
+    if mongo_uri_b == mongo_uri_a:
         is_direct_connection_b = is_direct_connection_a
 
     # Validate the MongoDB connection strings, direct connection flags, database names, and collection names.
