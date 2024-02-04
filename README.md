@@ -67,7 +67,7 @@ $ poetry install --only main
 
 ### 3. Use the tool.
 
-At the Poetry virtual environment's shell, run the `mongo_diff/mongo_diff.py` script as shown in the `--help` snippet below.
+At the Poetry virtual environment's shell, use the tool as shown in the `--help` snippet below.
 
 ```console
 $ python mongo_diff/mongo_diff.py --help
@@ -180,10 +180,49 @@ poetry shell
 
 > You can detach from the Poetry virtual environment's shell by running: `$ exit`
 
+From now on, I'll refer to the Poetry virtual environment's shell as the "Poetry shell."
+
 ### Install dependencies
 
-At the Poetry virtual environment's shell, install the project's dependencies:
+At the Poetry shell, install the project's dependencies:
 
 ```shell
 poetry install
+```
+
+### Make changes
+
+Edit the tool's source code and documentation however you want.
+
+### Build package
+
+At the Poetry shell, build the package based upon the latest source code:
+
+```shell
+poetry build
+```
+
+> That will create both a 
+> [source distribution](https://setuptools.pypa.io/en/latest/deprecated/distutils/sourcedist.html#creating-a-source-distribution)
+> file (whose name ends with `.tar.gz`) and a 
+> [wheel](https://packaging.python.org/en/latest/specifications/binary-distribution-format/#binary-distribution-format)
+> file (whose name ends with `.whl`) in the `dist` directory.
+
+### Publish package
+
+At the Poetry shell, [configure](https://python-poetry.org/docs/repositories/#configuring-credentials) Poetry to use
+your PyPI credentials, if you haven't already done so.
+
+```shell
+poetry config http-basic.pypi {your_PyPI_username}
+```
+> Poetry will prompt you for your PyPI **password**.
+ 
+> I use the username of "`__token__`" and a password that is an adequately-scoped token created via the
+> [PyPI website](https://pypi.org/manage/account/token/). 
+
+At the Poetry shell, publish the newly-built package to PyPI:
+
+```shell
+poetry publish
 ```
