@@ -67,61 +67,60 @@ class Result:
 def diff_collections(
         mongo_uri_a: Annotated[str, typer.Option(
             envvar="MONGO_URI_A",
-            help="Connection string for accessing the MongoDB server containing collection A",
+            help="Connection string for accessing the MongoDB server containing collection A.",
             show_default=False,
             rich_help_panel="Collection A",
         )],
         database_name_a: Annotated[str, typer.Option(
-            help="Name of the database containing collection A",
+            help="Name of the database containing collection A.",
             show_default=False,
             rich_help_panel="Collection A",
         )],
         collection_name_a: Annotated[str, typer.Option(
-            help="Name of collection A",
+            help="Name of collection A.",
             show_default=False,
             rich_help_panel="Collection A",
         )],
         identifier_field_name_a: Annotated[str, typer.Option(
             help="Name of the field of each document in collection A "
-                 "to use to identify a corresponding document in collection B",
+                 "to use to identify a corresponding document in collection B.",
             rich_help_panel="Collection A",
         )] = "id",
         is_direct_connection_a: Annotated[bool, typer.Option(
             "--is-direct-connection-a",
-            help="Whether to set the `directConnection` flag when connecting to the MongoDB server containing "
-                 "collection A. This can be useful when connecting to a replica set.",
+            help="Sets the `directConnection` flag when connecting to the MongoDB server containing collection A. "
+                 "This can be useful when connecting to a replica set.",
             rich_help_panel="Collection A",
         )] = False,
         mongo_uri_b: Annotated[str, typer.Option(
             envvar="MONGO_URI_B",
             help="Connection string for accessing the MongoDB server containing collection B "
-                 "(if different from that specified for collection A)",
+                 "(if different from that specified for collection A).",
             show_default=False,
             rich_help_panel="Collection B",
         )] = None,
         database_name_b: Annotated[str, typer.Option(
             help="Name of the database containing collection B "
-                 "(if different from that specified for collection A)",
+                 "(if different from that specified for collection A).",
             show_default=False,
             rich_help_panel="Collection B",
         )] = None,
         collection_name_b: Annotated[str, typer.Option(
             help="Name of collection B "
-                 "(if different from that specified for collection A)",
+                 "(if different from that specified for collection A).",
             show_default=False,
             rich_help_panel="Collection B",
         )] = None,
         identifier_field_name_b: Annotated[str, typer.Option(
             help="Name of the field of each document in collection B "
                  "to use to identify a corresponding document in collection A "
-                 "(if different from that specified for collection A)",
+                 "(if different from that specified for collection A).",
             show_default=False,
             rich_help_panel="Collection B",
         )] = None,
         is_direct_connection_b: Annotated[bool, typer.Option(
             "--is-direct-connection-b",
-            help="Whether to set the `directConnection` flag when connecting to the MongoDB server containing "
-                 "collection B. This can be useful when connecting to a replica set. "
+            help="Sets the `directConnection` flag when connecting to the MongoDB server containing collection B. "
                  "Note: If the connection strings for both collections are identical, this option will be ignored.",
             rich_help_panel="Collection B",
         )] = False,
