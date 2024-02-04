@@ -124,6 +124,9 @@ def diff_collections(
                  "Note: If the connection strings for both collections are identical, this option will be ignored.",
             rich_help_panel="Collection B",
         )] = False,
+        include_id: Annotated[bool, typer.Option(
+            help="Includes the `_id` field when comparing documents.",
+        )] = False,
 ):
     """
     Compare two MongoDB collections, displaying their differences on the console.
@@ -192,7 +195,8 @@ def diff_collections(
 
             # If such a document exists in collection B, compare it to the one from collection A.
             if document_b is not None:
-                differences_generator = dictdiffer.diff(document_a, document_b, ignore=["_id"])
+                fields_to_ignore = ["_id"] if not include_id else None
+                differences_generator = dictdiffer.diff(document_a, document_b, ignore=fields_to_ignore)
                 differences = list(differences_generator)
                 if len(differences) > 0:
                     report.num_documents_that_differ_across_collections += 1
