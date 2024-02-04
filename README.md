@@ -88,9 +88,9 @@ The script will display the comparison result on the console; for example:
 
 ```
                          Result                         
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
-┃ Description                               ┃ Quantity ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+╭───────────────────────────────────────────┬──────────╮
+│ Description                               │ Quantity │
+├───────────────────────────────────────────┼──────────┤
 │ Documents in collection A                 │        4 │
 │ Documents in collection B                 │        3 │
 ├───────────────────────────────────────────┼──────────┤
@@ -98,5 +98,5 @@ The script will display the comparison result on the console; for example:
 │ Documents in collection B only            │        1 │
 ├───────────────────────────────────────────┼──────────┤
 │ Documents that differ between collections │        1 │
-└───────────────────────────────────────────┴──────────┘
+╰───────────────────────────────────────────┴──────────╯
 ```

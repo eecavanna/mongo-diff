@@ -5,6 +5,7 @@ from pymongo import MongoClient, timeout
 from rich.console import Console
 from rich.table import Table, Column
 from rich.progress import Progress
+from rich import box
 
 app = typer.Typer(
     add_completion=False,  # hides the shell completion options from `--help` output
@@ -38,6 +39,7 @@ class Result:
         """
         table = Table("Description", Column(header="Quantity", justify="right"),
                       title=title,
+                      box=box.ROUNDED,
                       highlight=True)
         table.add_row("Documents in collection A",
                       str(self.num_documents_in_collection_a))
