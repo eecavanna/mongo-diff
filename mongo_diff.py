@@ -217,8 +217,8 @@ def diff_collections(
 
         # Compare the collections, using collection B as the reference.
         #
-        # Note: In this stage, we get each document from collection B and check whether it exists in collection B.
-        #       If it does, we do nothing, since we would have already checked whether the two documents match during
+        # Note: In this stage, we get each document from collection B and check whether it exists in collection A.
+        #       If it does, we do nothing; since we will have already checked whether the two documents match during
         #       the previous stage (note that this is done under the assumption that the contents of the collections
         #       do not change while this script is running). If it doesn't exist in collection A, we display the
         #       identifier value from collection B (i.e. the identifier value we failed to find in collection A).
