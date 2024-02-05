@@ -210,16 +210,25 @@ poetry build
 
 ### Publish package
 
-At the Poetry shell, [configure](https://python-poetry.org/docs/repositories/#configuring-credentials) Poetry to use
-your PyPI credentials, if you haven't already done so.
+#### Set up PyPI credentials
+
+At the Poetry shell, create the following 
+[environment variables](https://python-poetry.org/docs/repositories/#configuring-credentials), 
+which Poetry will check for if credentials aren't specified to it in another way.
 
 ```shell
-poetry config http-basic.pypi {your_PyPI_username}
+export POETRY_HTTP_BASIC_PYPI_USERNAME=__token__
+export POETRY_HTTP_BASIC_PYPI_PASSWORD={your_PyPI_API_token}
+export POETRY_PYPI_TOKEN_PYPI={your_PyPI_API_token_name}
+
+# (Optional) Confirm the environment variables exist.
+env | grep POETRY
 ```
-> Poetry will prompt you for your PyPI **password**.
- 
-> I use the username of "`__token__`" and a password that is an adequately-scoped token created via the
-> [PyPI website](https://pypi.org/manage/account/token/). 
+
+> Replace `{your_PyPI_API_token}` with a PyPI [API token](https://pypi.org/help/#apitoken) whose scope includes
+> this project. Also, replace `{your_PyPI_API_token_name}` with the name of that PyPI API token.
+
+#### Publish package to PyPI
 
 At the Poetry shell, publish the newly-built package to PyPI:
 
