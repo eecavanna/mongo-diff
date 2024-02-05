@@ -1,9 +1,15 @@
+# Reference: https://python-poetry.org/docs/pyproject/
+
 [tool.poetry]
 name = "mongo-diff"
-version = "0.1.1"
+version = "0.1.2"
 description = "Compare MongoDB collections from the command line."
 authors = []
 readme = "README.md"
+repository = "https://github.com/eecavanna/mongo-diff"
+homepage = "https://github.com/eecavanna/mongo-diff"
+documentation = "https://github.com/eecavanna/mongo-diff"
+keywords = ["mongodb", "mongo", "diff", "compare"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
