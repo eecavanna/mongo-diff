@@ -5,6 +5,9 @@
 Those collections can reside in either a single database or two separate databases (even across servers).
 
 ```mermaid
+%% This is the source code of a Mermaid diagram, which GitHub will render as a diagram.
+%% Note: PyPI does not render Mermaid diagrams, and instead displays their source code.
+%%       Reference: https://github.com/pypi/warehouse/issues/13083
 graph LR
     script[["mongo_diff.py"]]
     result["List of<br>differences"]
@@ -52,27 +55,21 @@ $ export MONGO_URI_B='mongodb://username:password@host.example.com:22222'
 > Note: That will only create those environment variables in the current shell process. You can persist them by adding
 > those same commands to your shell initialization script (e.g. `~/.zshrc`).
 
-### 2. Set up virtual environment.
+### 2. Use the tool.
+
+Run the tool via `pipx run`:
 
 ```shell
-# If you don't have Poetry installed yet...
-$ pipx install poetry
-
-# Create a Poetry virtual environment and attach to its shell:
-$ poetry shell
-
-# At the Poetry virtual environment's shell, install the project's production dependencies:
-$ poetry install --only main
+pipx run mongo-diff --help
 ```
+> [`pipx`](https://pipx.pypa.io/stable/) is a tool people can use to 
+> [download and run](https://pipx.pypa.io/stable/#where-does-pipx-install-apps-from)
+> a Python script that is hosted on PyPI.
 
-### 3. Use the tool.
-
-At the Poetry virtual environment's shell, use the tool as shown in the `--help` snippet below.
+Running the tool with the `--help` option will display the tool's options.
 
 ```console
-$ python mongo_diff/mongo_diff.py --help
-
- Usage: mongo_diff.py [OPTIONS]
+ Usage: mongo-diff [OPTIONS]
 
  Compare two MongoDB collections, displaying their differences on the console.
  Those collections can reside in either a single database or two separate
@@ -131,7 +128,7 @@ $ python mongo_diff/mongo_diff.py --help
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-> Note: The above `--help` snippet was captured from a terminal window whose width was 80 pixels.
+> Note: The above snippet was captured from a terminal window whose width was 80 pixels.
 
 #### Example output
 
@@ -252,3 +249,6 @@ At the Poetry shell, publish the newly-built package to PyPI:
 ```shell
 poetry publish
 ```
+
+At this point, people will be able to download and install the package from
+[PyPI](https://pypi.org/project/mongo-diff/).
