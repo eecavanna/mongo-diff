@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mongo-diff"
-version = "0.1.0"
+version = "0.1.1"
 description = "Compare MongoDB collections from the command line."
 authors = []
 readme = "README.md"

@@ -196,6 +196,28 @@ Edit the tool's source code and documentation however you want.
 
 ### Build package
 
+#### Update package version
+
+PyPI [doesn't allow](https://pypi.org/help/#file-name-reuse) people to publish the same "version" of a package multiple
+times.
+
+You can update the version identifier of the package by running:
+
+```shell
+poetry version {version_or_keyword}
+```
+> You can replace `{version_or_keyword}` with either a literal version identifier (e.g. `0.1.1`) or a keyword
+> (e.g. `major`, `minor`, or `patch`). You can run `$ poetry version --help` to see the valid keywords.
+
+Alternatively, you can manually edit a line in `pyproject.toml`:
+
+```diff
+- version = "0.1.0"
++ version = "0.1.1"
+```
+
+#### Build package
+
 At the Poetry shell, build the package based upon the latest source code:
 
 ```shell
