@@ -33,14 +33,12 @@ graph LR
 
 ### 1. (Optional) Create environment variables.
 
-Part of running `mongo-diff` involves providing MongoDB connection strings to it. Since MongoDB connection strings
-sometimes contain sensitive information, I recommend storing them in **environment variables** instead of specifying
-them via CLI options to `mongo-diff`.
+Part of running `mongo-diff` involves providing MongoDB connection strings to it. If your MongoDB connection strings
+contain sensitive information, such as passwords, I'd recommend storing them in **environment variables** instead of
+passing them to `mongo-diff` via the command line.
 
-> I think that will make it less likely that they are accidentally included in copy/pasted console output or in
-> technical demonstrations.
-
-`mongo-diff` is pre-programmed to look for two environment variables: `MONGO_URI_A` and `MONGO_URI_B`.
+If you don't pass `mongo-diff` your MongoDB connection strings via the command line, `mongo-diff` will
+look for them in environment variables named `MONGO_URI_A` and `MONGO_URI_B`.
 
 > You can learn more about those environment variables in the `--help` snippet below.
 
@@ -55,18 +53,37 @@ $ export MONGO_URI_B='mongodb://username:password@host.example.com:22222'
 > Note: That will only create those environment variables in the current shell process. You can persist them by adding
 > those same commands to your shell initialization script (e.g. `~/.zshrc`).
 
-### 2. Use the tool.
+### 2. Install the tool.
 
-Run the tool via `pipx run`:
+Assuming you have `pipx` installed, you can install the tool by running the following command:
 
 ```shell
-pipx run mongo-diff --help
+pipx install mongo-diff
 ```
-> [`pipx`](https://pipx.pypa.io/stable/) is a tool people can use to 
-> [download and run](https://pipx.pypa.io/stable/#where-does-pipx-install-apps-from)
-> a Python script that is hosted on PyPI.
 
-Running the tool with the `--help` option will display the tool's options.
+> [`pipx`](https://pipx.pypa.io/stable/) is a tool people can use to
+> [download and install](https://pipx.pypa.io/stable/#where-does-pipx-install-apps-from)
+> Python scripts that are hosted on PyPI.
+>
+> You can install `pipx` by running `$ python -m pip install pipx` or via another means
+> documented in its [installation guide](https://pipx.pypa.io/stable/installation/).
+
+Installing the tool onto your computer will make the command `mongo-diff` available on your computer.
+
+```console
+$ which mongo-diff
+/Users/YourName/.local/bin/mongo-diff
+```
+
+### 3. Use the tool.
+
+You can display the tool's `--help` snippet by running:
+
+```shell
+mongo-diff --help
+```
+
+At the time of this writing, the tool's `--help` snippet is:
 
 ```console
  Usage: mongo-diff [OPTIONS]
@@ -158,6 +175,22 @@ When the tool finishes comparing the collections, it will display a **summary** 
 ╰───────────────────────────────────────────┴──────────╯
 ```
 
+### 4. (Optional) Update the tool.
+
+You can update the tool to [the latest version available on PyPI](https://pypi.org/project/mongo-diff/) by running:
+
+```shell
+pipx upgrade mongo-diff
+```
+
+### 5. (Optional) Uninstall the tool.
+
+You can uninstall the tool from your computer by running:
+
+```shell
+pipx uninstall mongo-diff
+```
+
 ## Development
 
 We use [Poetry](https://python-poetry.org/) to both (a) manage dependencies and (b) publish packages to PyPI.
@@ -203,6 +236,7 @@ You can update the version identifier of the package by running:
 ```shell
 poetry version {version_or_keyword}
 ```
+
 > You can replace `{version_or_keyword}` with either a literal version identifier (e.g. `0.1.1`) or a keyword
 > (e.g. `major`, `minor`, or `patch`). You can run `$ poetry version --help` to see the valid keywords.
 
@@ -221,9 +255,9 @@ At the Poetry shell, build the package based upon the latest source code:
 poetry build
 ```
 
-> That will create both a 
+> That will create both a
 > [source distribution](https://setuptools.pypa.io/en/latest/deprecated/distutils/sourcedist.html#creating-a-source-distribution)
-> file (whose name ends with `.tar.gz`) and a 
+> file (whose name ends with `.tar.gz`) and a
 > [wheel](https://packaging.python.org/en/latest/specifications/binary-distribution-format/#binary-distribution-format)
 > file (whose name ends with `.whl`) in the `dist` directory.
 
@@ -231,8 +265,8 @@ poetry build
 
 #### Set up PyPI credentials
 
-At the Poetry shell, create the following 
-[environment variable](https://python-poetry.org/docs/repositories/#configuring-credentials), 
+At the Poetry shell, create the following
+[environment variable](https://python-poetry.org/docs/repositories/#configuring-credentials),
 which Poetry will check for if credentials aren't specified to it in another way.
 
 ```shell
