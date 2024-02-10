@@ -42,9 +42,7 @@ pipx install mongo-diff
 > [`pipx`](https://pipx.pypa.io/stable/) is a tool people can use to
 > [download and install](https://pipx.pypa.io/stable/#where-does-pipx-install-apps-from)
 > Python scripts that are hosted on PyPI.
->
-> You can install `pipx` by running `$ python -m pip install pipx` or via another means
-> documented in its [installation guide](https://pipx.pypa.io/stable/installation/).
+> You can [install `pipx`](https://pipx.pypa.io/stable/installation/) by running `$ python -m pip install pipx`.
 
 Installing the tool onto your computer will make the command `mongo-diff` available on your computer.
 
