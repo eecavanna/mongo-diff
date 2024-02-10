@@ -183,6 +183,13 @@ We use [Poetry](https://python-poetry.org/) to both (a) manage dependencies and 
 - `pyproject.toml`: Configuration file for Poetry and other tools (was generated via `$ poetry init`)
 - `poetry.lock`: List of dependencies, direct and indirect (was generated via `$ poetry update`)
 
+### Clone repository
+
+```shell
+git clone https://github.com/eecavanna/mongo-diff.git
+cd mongo-diff
+```
+
 ### Create virtual environment
 
 Create a Poetry virtual environment and attach to its shell:
