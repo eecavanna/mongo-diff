@@ -207,7 +207,7 @@ def diff_collections(
                     console.print(f"Documents differ between collections: "
                                   f"{identifier_field_name_a}={identifier_value_a},"
                                   f"{identifier_field_name_b}={document_b[identifier_field_name_b]}. "
-                                  f"Differences: {list(differences)}")
+                                  f"Differences: {differences}")
             else:
                 report.num_documents_in_collection_a_only += 1
                 console.print(f"Document exists in collection A only: "
