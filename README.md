@@ -216,6 +216,12 @@ poetry install
 
 Edit the tool's source code and documentation however you want.
 
+While editing the tool's source code, you can run the tool as you normally would in order to test things out.
+
+```shell
+mongo-diff --help
+```
+
 ### Build package
 
 #### Update package version
