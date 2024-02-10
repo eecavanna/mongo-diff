@@ -8,7 +8,7 @@ from rich.progress import Progress
 from rich import box
 
 app = typer.Typer(
-    help="Compare MongoDB collections with one another.",
+    help="Compare two MongoDB collections.",
     add_completion=False,  # hides the shell completion options from `--help` output
 )
 
@@ -129,7 +129,7 @@ def diff_collections(
         )] = False,
 ):
     """
-    Compare two MongoDB collections, displaying their differences on the console.
+    Compare two MongoDB collections.
 
     Those collections can reside in either a single database or two separate databases (even across servers).
     """

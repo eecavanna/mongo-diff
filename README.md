@@ -88,7 +88,7 @@ At the time of this writing, the tool's `--help` snippet is:
 ```console
  Usage: mongo-diff [OPTIONS]
 
- Compare two MongoDB collections, displaying their differences on the console.
+ Compare two MongoDB collections.
  Those collections can reside in either a single database or two separate
  databases (even across servers).
 
