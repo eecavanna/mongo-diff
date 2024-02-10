@@ -20,7 +20,7 @@ console = Console()
 class Result:
     r"""The result of the comparison."""
 
-    def __init__(self, num_documents_in_collection_a: int, num_documents_in_collection_b: int):
+    def __init__(self, num_documents_in_collection_a: int, num_documents_in_collection_b: int) -> None:
         r"""Initializes the result."""
         self.num_documents_in_collection_a = num_documents_in_collection_a
         self.num_documents_in_collection_b = num_documents_in_collection_b
@@ -29,7 +29,7 @@ class Result:
         self.num_documents_that_differ_across_collections = 0
 
     @staticmethod
-    def colorize_if(raw_string: str, condition: bool, color: str):
+    def colorize_if(raw_string: str, condition: bool, color: str) -> str:
         return f"[{color}]{raw_string}[/{color}]" if condition else raw_string
 
     def get_summary_table(self, title: str | None = "Result") -> Table:
@@ -127,7 +127,7 @@ def diff_collections(
         include_id: Annotated[bool, typer.Option(
             help="Includes the `_id` field when comparing documents.",
         )] = False,
-):
+) -> None:
     """
     Compare two MongoDB collections.
 
