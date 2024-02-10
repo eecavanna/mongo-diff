@@ -30,6 +30,7 @@ class Result:
 
     @staticmethod
     def colorize_if(raw_string: str, condition: bool, color: str) -> str:
+        r"""Surrounds the raw string with Rich color tags if the condition is true."""
         return f"[{color}]{raw_string}[/{color}]" if condition else raw_string
 
     def get_summary_table(self, title: str | None = "Result") -> Table:
@@ -128,7 +129,7 @@ def diff_collections(
             help="Includes the `_id` field when comparing documents.",
         )] = False,
 ) -> None:
-    """
+    r"""
     Compare two MongoDB collections.
 
     Those collections can reside in either a single database or two separate databases (even across servers).
