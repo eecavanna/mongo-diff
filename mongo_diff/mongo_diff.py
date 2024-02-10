@@ -180,7 +180,7 @@ def diff_collections(
     # Initialize the report we will display later.
     num_documents_in_collection_a = collection_a.count_documents({})
     num_documents_in_collection_b = collection_b.count_documents({})
-    report = Result(collection_a.count_documents({}), collection_b.count_documents({}))
+    report = Result(num_documents_in_collection_a, num_documents_in_collection_b)
 
     # Set up the progress bar functionality.
     with Progress(console=console) as progress:
