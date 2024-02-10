@@ -31,29 +31,7 @@ graph LR
 
 ## Usage
 
-### 1. (Optional) Create environment variables.
-
-Part of running `mongo-diff` involves providing MongoDB connection strings to it. If your MongoDB connection strings
-contain sensitive information, such as passwords, I'd recommend storing them in **environment variables** instead of
-passing them to `mongo-diff` via the command line.
-
-If you don't pass `mongo-diff` your MongoDB connection strings via the command line, `mongo-diff` will
-look for them in environment variables named `MONGO_URI_A` and `MONGO_URI_B`.
-
-> You can learn more about those environment variables in the `--help` snippet below.
-
-You can create those environment variables by running the following commands
-(replacing the example connection strings with real ones):
-
-```shell  
-$ export MONGO_URI_A='mongodb://localhost:27017'
-$ export MONGO_URI_B='mongodb://username:password@host.example.com:22222'
-```
-
-> Note: That will only create those environment variables in the current shell process. You can persist them by adding
-> those same commands to your shell initialization script (e.g. `~/.zshrc`).
-
-### 2. Install the tool.
+### Installation
 
 Assuming you have `pipx` installed, you can install the tool by running the following command:
 
@@ -75,7 +53,7 @@ $ which mongo-diff
 /Users/YourName/.local/bin/mongo-diff
 ```
 
-### 3. Use the tool.
+### Running
 
 You can display the tool's `--help` snippet by running:
 
@@ -147,6 +125,22 @@ At the time of this writing, the tool's `--help` snippet is:
 
 > Note: The above snippet was captured from a terminal window whose width was 80 pixels.
 
+#### MongoDB connection strings
+
+As documented in the `--help` snippet above, you can provide the MongoDB connection strings to the tool via either (a)
+command-line options; or (b) environment variables named `MONGO_URI_A` and `MONGO_URI_B`. The latter can come in handy
+for MongoDB connection strings that contain passwords.
+
+Here's how you could create those environment variables:
+
+```shell  
+export MONGO_URI_A='mongodb://localhost:27017'
+export MONGO_URI_B='mongodb://username:password@host.example.com:22222'
+```
+
+> Note: That will only create those environment variables in the current shell process. You can persist them by adding
+> those same commands to your shell initialization script (e.g. `~/.bashrc`, `~/.zshrc`).
+
 #### Example output
 
 As the tool compares the collections, it will display the **differences** it detects; like this:
@@ -175,7 +169,7 @@ When the tool finishes comparing the collections, it will display a **summary** 
 ╰───────────────────────────────────────────┴──────────╯
 ```
 
-### 4. (Optional) Update the tool.
+### Updating
 
 You can update the tool to [the latest version available on PyPI](https://pypi.org/project/mongo-diff/) by running:
 
@@ -183,7 +177,7 @@ You can update the tool to [the latest version available on PyPI](https://pypi.o
 pipx upgrade mongo-diff
 ```
 
-### 5. (Optional) Uninstall the tool.
+### Uninstallation
 
 You can uninstall the tool from your computer by running:
 
