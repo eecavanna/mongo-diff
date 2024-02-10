@@ -87,12 +87,6 @@ def diff_collections(
                  "to use to identify a corresponding document in collection B.",
             rich_help_panel="Collection A",
         )] = "id",
-        is_direct_connection_a: Annotated[bool, typer.Option(
-            "--is-direct-connection-a",
-            help="Sets the `directConnection` flag when connecting to the MongoDB server containing collection A. "
-                 "This can be useful when connecting to a replica set.",
-            rich_help_panel="Collection A",
-        )] = False,
         mongo_uri_b: Annotated[str, typer.Option(
             envvar="MONGO_URI_B",
             help="Connection string for accessing the MongoDB server containing collection B "
@@ -119,12 +113,6 @@ def diff_collections(
             show_default=False,
             rich_help_panel="Collection B",
         )] = None,
-        is_direct_connection_b: Annotated[bool, typer.Option(
-            "--is-direct-connection-b",
-            help="Sets the `directConnection` flag when connecting to the MongoDB server containing collection B. "
-                 "Note: If the connection strings for both collections are identical, this option will be ignored.",
-            rich_help_panel="Collection B",
-        )] = False,
         include_id: Annotated[bool, typer.Option(
             help="Includes the `_id` field when comparing documents.",
         )] = False,
@@ -141,15 +129,11 @@ def diff_collections(
     if mongo_uri_b is None:
         mongo_uri_b = mongo_uri_a
 
-    # If the two connection strings match one another, force `is_direct_connection_b` to match `is_direct_connection_a`.
-    if mongo_uri_b == mongo_uri_a:
-        is_direct_connection_b = is_direct_connection_a
-
-    # Validate the MongoDB connection strings, direct connection flags, database names, and collection names.
+    # Validate the MongoDB connection strings, database names, and collection names.
     collections = []
     for (mongo_uri, is_direct_connection, database_name, collection_name) in [
-        (mongo_uri_a, is_direct_connection_a, database_name_a, collection_name_a),
-        (mongo_uri_b, is_direct_connection_b, database_name_b, collection_name_b),
+        (mongo_uri_a, True, database_name_a, collection_name_a),
+        (mongo_uri_b, True, database_name_b, collection_name_b),
     ]:
         mongo_client: MongoClient = MongoClient(host=mongo_uri, directConnection=is_direct_connection)
         with (timeout(5)):  # if any message exchange takes > 5 seconds, this will raise an exception

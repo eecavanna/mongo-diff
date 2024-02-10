@@ -82,11 +82,6 @@ At the time of this writing, the tool's `--help` snippet is:
 │                                           a corresponding document in        │
 │                                           collection B.                      │
 │                                           [default: id]                      │
-│    --is-direct-connection-a               Sets the `directConnection` flag   │
-│                                           when connecting to the MongoDB     │
-│                                           server containing collection A.    │
-│                                           This can be useful when connecting │
-│                                           to a replica set.                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Collection B ───────────────────────────────────────────────────────────────╮
 │ --mongo-uri-b                    TEXT  Connection string for accessing the   │
@@ -105,12 +100,6 @@ At the time of this writing, the tool's `--help` snippet is:
 │                                        corresponding document in collection  │
 │                                        A (if different from that specified   │
 │                                        for collection A).                    │
-│ --is-direct-connection-b               Sets the `directConnection` flag when │
-│                                        connecting to the MongoDB server      │
-│                                        containing collection B. Note: If the │
-│                                        connection strings for both           │
-│                                        collections are identical, this       │
-│                                        option will be ignored.               │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
