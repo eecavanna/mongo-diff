@@ -39,7 +39,7 @@ class Result:
 
         Reference: https://rich.readthedocs.io/en/stable/tables.html
         """
-        table = Table("Description", Column(header="Quantity", justify="right"),
+        table = Table(Column(header="Description"), Column(header="Quantity", justify="right"),
                       title=title,
                       box=box.ROUNDED,
                       highlight=True)
