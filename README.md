@@ -44,13 +44,6 @@ pipx install mongo-diff
 > Python scripts that are hosted on PyPI.
 > You can [install `pipx`](https://pipx.pypa.io/stable/installation/) by running `$ python -m pip install pipx`.
 
-Installing the tool onto your computer will make the command `mongo-diff` available on your computer.
-
-```console
-$ which mongo-diff
-/Users/YourName/.local/bin/mongo-diff
-```
-
 ### Running
 
 You can display the tool's `--help` snippet by running:
