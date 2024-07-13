@@ -103,7 +103,7 @@ At the time of this writing, the tool's `--help` snippet is:
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-> Note: The above snippet was captured from a terminal window whose width was 80 pixels.
+> Note: The above snippet was captured from a terminal window whose width was 80 characters.
 
 #### MongoDB connection strings
 
