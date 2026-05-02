@@ -1,4 +1,5 @@
 from difflib import unified_diff
+from typing import Optional
 
 import dictdiffer
 import typer
@@ -36,7 +37,7 @@ class Result:
         r"""Surrounds the raw string with Rich color tags if the condition is true."""
         return f"[{color}]{raw_string}[/{color}]" if condition else raw_string
 
-    def get_summary_table(self, title: str | None = "Result") -> Table:
+    def get_summary_table(self, title: Optional[str] = "Result") -> Table:
         r"""
         Returns a Rich Table summarizing the result.
 
@@ -90,26 +91,26 @@ def diff_collections(
                  "to use to identify a corresponding document in collection B.",
             rich_help_panel="Collection A",
         )] = "id",
-        mongo_uri_b: Annotated[str, typer.Option(
+        mongo_uri_b: Annotated[Optional[str], typer.Option(
             envvar="MONGO_URI_B",
             help="Connection string for accessing the MongoDB server containing collection B "
                  "(if different from that specified for collection A).",
             show_default=False,
             rich_help_panel="Collection B",
         )] = None,
-        database_name_b: Annotated[str, typer.Option(
+        database_name_b: Annotated[Optional[str], typer.Option(
             help="Name of the database containing collection B "
                  "(if different from that specified for collection A).",
             show_default=False,
             rich_help_panel="Collection B",
         )] = None,
-        collection_name_b: Annotated[str, typer.Option(
+        collection_name_b: Annotated[Optional[str], typer.Option(
             help="Name of collection B "
                  "(if different from that specified for collection A).",
             show_default=False,
             rich_help_panel="Collection B",
         )] = None,
-        identifier_field_name_b: Annotated[str, typer.Option(
+        identifier_field_name_b: Annotated[Optional[str], typer.Option(
             help="Name of the field of each document in collection B "
                  "to use to identify a corresponding document in collection A "
                  "(if different from that specified for collection A).",
@@ -160,6 +161,10 @@ def diff_collections(
             collection = database[collection_name]
             collections.append(collection)
 
+    # Define a MongoDB query projection based upon whether the user wants us to consider the `_id`
+    # field when comparing documents or not.
+    projection = {"_id": 1 if include_id else  0}
+
     # Make more intuitive aliases for the collections.
     collection_a = collections[0]
     collection_b = collections[1]
@@ -179,15 +184,23 @@ def diff_collections(
         #
         task_a = progress.add_task("Comparing collections, using collection A as reference",
                                    total=num_documents_in_collection_a)
-        for document_a in collection_a.find():
+        for document_a in collection_a.find({}, projection):
+
+            # Get the identifier value from the document from collection A.
+            if identifier_field_name_a in document_a:
+                identifier_value_a = document_a[identifier_field_name_a]
+            else:
+                raise ValueError(
+                    f"Document from collection A lacks identifier field: '{identifier_field_name_a}'. "
+                    f"Document: {document_a}"
+                )
+
             # Check whether a document having the same identifier value exists in collection B.
-            identifier_value_a = document_a[identifier_field_name_a]
-            document_b = collection_b.find_one({identifier_field_name_b: identifier_value_a})
+            document_b = collection_b.find_one({identifier_field_name_b: identifier_value_a}, projection)
 
             # If such a document exists in collection B, compare it to the one from collection A.
             if document_b is not None:
-                fields_to_ignore = ["_id"] if not include_id else None
-                differences_generator = dictdiffer.diff(document_a, document_b, ignore=fields_to_ignore)
+                differences_generator = dictdiffer.diff(document_a, document_b)
                 differences = list(differences_generator)
                 if len(differences) > 0:
                     report.num_documents_that_differ_across_collections += 1
@@ -199,16 +212,14 @@ def diff_collections(
 
                     # Display a colorized diff of the two documents' canonical JSON representations.
                     # Docs: https://pymongo.readthedocs.io/en/stable/api/bson/json_util.html
-                    document_a_without_ignored_fields = document_a if include_id else {k: v for k, v in document_a.items() if k != "_id"}
-                    document_b_without_ignored_fields = document_b if include_id else {k: v for k, v in document_b.items() if k != "_id"}
                     a_json = json_util.dumps(
-                        document_a_without_ignored_fields,
+                        document_a,
                         json_options=json_util.CANONICAL_JSON_OPTIONS,
                         indent=2,
                         sort_keys=True,
                     )
                     b_json = json_util.dumps(
-                        document_b_without_ignored_fields,
+                        document_b,
                         json_options=json_util.CANONICAL_JSON_OPTIONS,
                         indent=2,
                         sort_keys=True,
@@ -247,8 +258,17 @@ def diff_collections(
         task_b = progress.add_task("Comparing collections, using collection B as reference",
                                    total=num_documents_in_collection_b)
         for document_b in collection_b.find():
+
+            # Get the identifier value from the document from collection B.
+            if identifier_field_name_b in document_b:
+                identifier_value_b = document_b[identifier_field_name_b]
+            else:
+                raise ValueError(
+                    f"Document from collection B lacks identifier field: {identifier_field_name_b}. "
+                    f"Document: {document_b}"
+                )
+
             # Check whether a document having the same identifier value exists in collection A.
-            identifier_value_b = document_b[identifier_field_name_b]
             document_a = collection_a.find_one({identifier_field_name_a: identifier_value_b})
 
             # If such a document exists in collection B, compare it to the one from collection A.
