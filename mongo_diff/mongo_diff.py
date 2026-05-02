@@ -1,7 +1,10 @@
+from difflib import unified_diff
+
 import dictdiffer
 import typer
 from typing_extensions import Annotated
 from pymongo import MongoClient, timeout
+from bson import json_util
 from rich.console import Console
 from rich.table import Table, Column
 from rich.progress import Progress
@@ -188,10 +191,39 @@ def diff_collections(
                 differences = list(differences_generator)
                 if len(differences) > 0:
                     report.num_documents_that_differ_across_collections += 1
+                    identifier_value_b = document_b[identifier_field_name_b]
                     console.print(f"Documents differ between collections: "
                                   f"{identifier_field_name_a}={identifier_value_a},"
-                                  f"{identifier_field_name_b}={document_b[identifier_field_name_b]}. "
+                                  f"{identifier_field_name_b}={identifier_value_b}. "
                                   f"Differences: {differences}")
+
+                    # Display a colorized diff of the two documents' canonical JSON representations.
+                    # Docs: https://pymongo.readthedocs.io/en/stable/api/bson/json_util.html
+                    a_json = json_util.dumps(
+                        document_a,
+                        json_options=json_util.CANONICAL_JSON_OPTIONS,
+                        indent=2,
+                    )
+                    b_json = json_util.dumps(
+                        document_b,
+                        json_options=json_util.CANONICAL_JSON_OPTIONS,
+                        indent=2,
+                    )
+                    diff_lines = unified_diff(
+                        a_json.splitlines(),
+                        b_json.splitlines(),
+                        fromfile=f"Collection A: {identifier_value_a}",
+                        tofile=f"Collection B: {identifier_value_b}",
+                        lineterm="",
+                    )
+                    for line in diff_lines:
+                        if line.startswith("+"):
+                            console.print(f"[green]{line}[/green]")
+                        elif line.startswith("-"):
+                            console.print(f"[red]{line}[/red]")
+                        else:
+                            console.print(line, highlight=False)
+
             else:
                 report.num_documents_in_collection_a_only += 1
                 console.print(f"Document exists in collection A only: "
