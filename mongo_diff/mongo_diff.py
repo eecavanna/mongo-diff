@@ -203,11 +203,13 @@ def diff_collections(
                         document_a,
                         json_options=json_util.CANONICAL_JSON_OPTIONS,
                         indent=2,
+                        sort_keys=True,
                     )
                     b_json = json_util.dumps(
                         document_b,
                         json_options=json_util.CANONICAL_JSON_OPTIONS,
                         indent=2,
+                        sort_keys=True,
                     )
                     diff_lines = unified_diff(
                         a_json.splitlines(),
