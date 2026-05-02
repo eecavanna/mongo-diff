@@ -199,14 +199,16 @@ def diff_collections(
 
                     # Display a colorized diff of the two documents' canonical JSON representations.
                     # Docs: https://pymongo.readthedocs.io/en/stable/api/bson/json_util.html
+                    document_a_without_ignored_fields = document_a if include_id else {k: v for k, v in document_a.items() if k != "_id"}
+                    document_b_without_ignored_fields = document_b if include_id else {k: v for k, v in document_b.items() if k != "_id"}
                     a_json = json_util.dumps(
-                        document_a,
+                        document_a_without_ignored_fields,
                         json_options=json_util.CANONICAL_JSON_OPTIONS,
                         indent=2,
                         sort_keys=True,
                     )
                     b_json = json_util.dumps(
-                        document_b,
+                        document_b_without_ignored_fields,
                         json_options=json_util.CANONICAL_JSON_OPTIONS,
                         indent=2,
                         sort_keys=True,
@@ -214,15 +216,15 @@ def diff_collections(
                     diff_lines = unified_diff(
                         a_json.splitlines(),
                         b_json.splitlines(),
-                        fromfile=f"Collection A: {identifier_value_a}",
-                        tofile=f"Collection B: {identifier_value_b}",
+                        fromfile=f"Collection A: {identifier_field_name_a}={identifier_value_a}",
+                        tofile=f"Collection B: {identifier_field_name_b}={identifier_value_b}",
                         lineterm="",
                     )
                     for line in diff_lines:
                         if line.startswith("+"):
-                            console.print(f"[green]{line}[/green]")
+                            console.print(line, style="green", highlight=False)
                         elif line.startswith("-"):
-                            console.print(f"[red]{line}[/red]")
+                            console.print(line, style="red", highlight=False)
                         else:
                             console.print(line, highlight=False)
 
