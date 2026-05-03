@@ -255,7 +255,7 @@ def diff_collections(
         include_oid: Annotated[bool, typer.Option(
             "--include-oid",
             "--include-id",  # support this legacy flag (a misnomer) for backwards compatibility
-            help="Includes the `_id` field when comparing documents.",
+            help="Include the `_id` field when comparing documents (`--include-id` is deprecated).",
         )] = False,
 ) -> None:
     r"""
