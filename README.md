@@ -62,10 +62,9 @@ At the time of this writing, the tool's `--help` snippet is:
  databases (even across servers).
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --include-id    --no-include-id      Includes the `_id` field when comparing │
-│                                      documents.                              │
-│                                      [default: no-include-id]                │
-│ --help                               Show this message and exit.             │
+│ --include-oid,--include-id          Includes the `_id` field when comparing  │
+│                                     documents.                               │
+│ --help                              Show this message and exit.              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Collection A ───────────────────────────────────────────────────────────────╮
 │ *  --mongo-uri-a                    TEXT  Connection string for accessing    │
