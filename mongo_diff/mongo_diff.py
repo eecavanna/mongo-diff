@@ -86,8 +86,16 @@ class Comparator():
 
         fields_to_ignore = {"_id"} if ignore_oid else set()
         differences_generator = dictdiffer.diff(document_a, document_b, ignore=fields_to_ignore)
-        differences: list[tuple] = list(differences_generator)
-        return len(differences) == 0
+
+        # Check whether the generator (which is an iterator) yields any differences.
+        documents_are_same = False
+        try:
+            # Note: If this statement causes a `StopIteration` to be raised, it means the generator
+            #       does not have any differences to yield (i.e. the documents match one another).
+            _ = next(differences_generator)
+        except StopIteration:
+            documents_are_same = True
+        return documents_are_same
 
     @staticmethod
     def generate_diff(
