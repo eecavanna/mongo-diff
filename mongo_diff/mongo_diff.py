@@ -125,6 +125,24 @@ class Comparator():
         return diff_lines
 
 
+def make_pymongo_filter_for_field_having_value_null(field_name: str) -> dict:
+    r"""
+    Returns a pymongo filter for documents in which the specified field exists and contains `null`.
+    
+    This helper function is useful because MongoDB interprets the filter `{"field_name": None}` as
+    matching both (a) documents in which the specified field contains `null`, and (b) documents in
+    which the specified field does not exist. This helper function disambiguates between the two.
+
+    Reference: https://www.mongodb.com/docs/manual/tutorial/query-for-null-fields/
+    """
+    return {
+        "$and": [
+            {field_name: {"$exists": True}},
+            {field_name: None},
+        ]
+    }
+
+
 @app.command("diff-collections")
 def diff_collections(
         mongo_uri_a: Annotated[str, typer.Option(
@@ -252,7 +270,17 @@ def diff_collections(
                 )
 
             # Check whether a document having the same identifier value exists in collection B.
-            document_b = collection_b.find_one({identifier_field_name_b: identifier_value_a})
+            #
+            # Note: If the identifier value from document A was `None`, we use a special filter
+            #       (when checking collection B) to disambiguate between documents in which the
+            #       identifier field contains `None` and documents in which the identifier field
+            #       does not exist at all. MongoDB does not distinguish between those two cases when
+            #       we use a basic filter like `{field_name: None}`.
+            #
+            filter_b: dict = {identifier_field_name_b: identifier_value_a}
+            if identifier_value_a is None:
+                filter_b = make_pymongo_filter_for_field_having_value_null(identifier_field_name_b)
+            document_b = collection_b.find_one(filter=filter_b)
 
             # If such a document exists in collection B, compare it to the one from collection A.
             if document_b is not None:
