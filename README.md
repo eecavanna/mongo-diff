@@ -211,6 +211,17 @@ While editing the tool's source code, you can run the tool as you normally would
 mongo-diff --help
 ```
 
+### Run tests
+
+We currently only have a smattering of doctests in this codebase. You can run them via:
+
+```shell
+poetry run python -m doctest ./mongo_diff/**/*.py
+```
+
+We may eventually populate the `tests/` directory with a more exhaustive test suite,
+using [pytest](https://docs.pytest.org/en/stable/) and [mongomock](https://pypi.org/project/mongomock/).
+
 ### Build package
 
 #### Update package version

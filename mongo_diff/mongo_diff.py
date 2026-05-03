@@ -75,6 +75,13 @@ class Comparator():
         r"""
         Returns `True` if the documents have the same fields and values as one another;
         otherwise `False`. Considers the `_id` field unless you opt out via `ignore_oid`.
+
+        >>> Comparator.compare_documents({"a": 1}, {"a": 1})
+        True
+        >>> Comparator.compare_documents({"_id": 1, "a": 1}, {"_id": 2, "a": 1})
+        False
+        >>> Comparator.compare_documents({"_id": 1, "a": 1}, {"_id": 2, "a": 1}, ignore_oid=True)
+        True
         """
 
         fields_to_ignore = {"_id"} if ignore_oid else set()
@@ -95,6 +102,48 @@ class Comparator():
         JSON representations. Considers the `_id` field unless you opt out via `ignore_oid`.
 
         Reference: https://pymongo.readthedocs.io/en/stable/api/bson/json_util.html
+
+        >>> document_a = dict(_id=1, id="123", name="adam")
+        >>> document_b = dict(_id=2, id="123", name="betty")
+        >>> document_c = dict(_id=1, id="123", name="betty")
+        >>> for line in list(Comparator.generate_diff(document_a, document_b, "left", "right")):
+        ...     print(line)
+        --- left
+        +++ right
+        @@ -1,7 +1,7 @@
+         {
+           "_id": {
+        -    "$numberInt": "1"
+        +    "$numberInt": "2"
+           },
+           "id": "123",
+        -  "name": "adam"
+        +  "name": "betty"
+         }
+        >>> for line in list(Comparator.generate_diff(document_a, document_b, "left", "right", ignore_oid=True)):
+        ...     print(line)
+        --- left
+        +++ right
+        @@ -1,4 +1,4 @@
+         {
+           "id": "123",
+        -  "name": "adam"
+        +  "name": "betty"
+         }
+        >>> for line in list(Comparator.generate_diff(document_b, document_c, "left", "right")):
+        ...     print(line)
+        --- left
+        +++ right
+        @@ -1,6 +1,6 @@
+         {
+           "_id": {
+        -    "$numberInt": "2"
+        +    "$numberInt": "1"
+           },
+           "id": "123",
+           "name": "betty"
+        >>> list(Comparator.generate_diff(document_b, document_c, "left", "right", ignore_oid=True))
+        []
         """
 
         candidate_a = document_a.copy()
@@ -128,12 +177,15 @@ class Comparator():
 def make_pymongo_filter_for_field_having_value_null(field_name: str) -> dict:
     r"""
     Returns a pymongo filter for documents in which the specified field exists and contains `null`.
-    
+
     This helper function is useful because MongoDB interprets the filter `{"field_name": None}` as
     matching both (a) documents in which the specified field contains `null`, and (b) documents in
     which the specified field does not exist. This helper function disambiguates between the two.
 
     Reference: https://www.mongodb.com/docs/manual/tutorial/query-for-null-fields/
+
+    >>> make_pymongo_filter_for_field_having_value_null("id")
+    {'$and': [{'id': {'$exists': True}}, {'id': None}]}
     """
     return {
         "$and": [
