@@ -216,7 +216,7 @@ mongo-diff --help
 We currently only have a smattering of doctests in this codebase. You can run them via:
 
 ```shell
-poetry run python -m doctest ./mongo_diff/**/*.py
+poetry run python -m doctest ./mongo_diff/mongo_diff.py
 ```
 
 We may eventually populate the `tests/` directory with a more exhaustive test suite,
