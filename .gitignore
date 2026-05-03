@@ -7,3 +7,6 @@
 # Python virtual environment.
 /venv
 /.venv
+
+# Compiled/bytecode files.
+*.pyc
