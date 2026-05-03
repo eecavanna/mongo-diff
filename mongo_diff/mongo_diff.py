@@ -7,6 +7,7 @@ from typing_extensions import Annotated
 from pymongo import MongoClient, timeout
 from bson import json_util
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table, Column
 from rich.progress import Progress
 from rich import box
@@ -288,7 +289,7 @@ def diff_collections(
                 report.num_documents_in_collection_a_only += 1
                 console.print(
                     f"Document exists in collection A only: "
-                    f"[red]{identifier_field_name_a}={identifier_value_a!r}[/red]",
+                    f"[red]{escape(identifier_field_name_a)}={escape(repr(identifier_value_a))}[/red]",
                     highlight=False,
                 )
 
@@ -324,7 +325,7 @@ def diff_collections(
                 report.num_documents_in_collection_b_only += 1
                 console.print(
                     f"Document exists in collection B only: "
-                    f"[green]{identifier_field_name_b}={identifier_value_b!r}[/green]",
+                    f"[green]{escape(identifier_field_name_b)}={escape(repr(identifier_value_b))}[/green]",
                     highlight=False,
                 )
 
