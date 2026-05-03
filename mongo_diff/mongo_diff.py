@@ -398,7 +398,17 @@ def diff_collections(
                 )
 
             # Check whether a document having the same identifier value exists in collection A.
-            document_a = collection_a.find_one({identifier_field_name_a: identifier_value_b})
+            #
+            # Note: If the identifier value from document B was `None`, we use a special filter
+            #       (when checking collection A) to disambiguate between documents in which the
+            #       identifier field contains `None` and documents in which the identifier field
+            #       does not exist at all. MongoDB does not distinguish between those two cases when
+            #       we use a basic filter like `{field_name: None}`.
+            #
+            filter_a: dict = {identifier_field_name_a: identifier_value_b}
+            if identifier_value_b is None:
+                filter_a = make_pymongo_filter_for_field_having_value_null(identifier_field_name_a)
+            document_a = collection_a.find_one(filter=filter_a)
 
             # If such a document exists in collection B, compare it to the one from collection A.
             if document_a is None:
