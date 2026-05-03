@@ -70,12 +70,14 @@ class Result:
 
 class Comparator():
     @staticmethod
-    def compare_documents(document_a: dict, document_b: dict) -> bool:
+    def compare_documents(document_a: dict, document_b: dict, ignore_oid: bool = False) -> bool:
         r"""
-        Returns `True` if the documents have the same fields and values as one another; otherwise `False`.
+        Returns `True` if the documents have the same fields and values as one another;
+        otherwise `False`. Considers the `_id` field unless you opt out via `ignore_oid`.
         """
 
-        differences_generator = dictdiffer.diff(document_a, document_b)
+        fields_to_ignore = {"_id"} if ignore_oid else set()
+        differences_generator = dictdiffer.diff(document_a, document_b, ignore=fields_to_ignore)
         differences: list[tuple] = list(differences_generator)
         return len(differences) == 0
 
@@ -85,22 +87,29 @@ class Comparator():
         document_b: dict,
         label_a: str,
         label_b: str,
+        ignore_oid: bool = False,
     ) -> Iterator[str]:
         r"""
-        Returns an iterator that yields the lines of a Git-like diff of the documents'
-        canonical JSON representations.
+        Returns an iterator that yields the lines of a Git-like diff of the documents' canonical
+        JSON representations. Considers the `_id` field unless you opt out via `ignore_oid`.
 
         Reference: https://pymongo.readthedocs.io/en/stable/api/bson/json_util.html
         """
 
+        candidate_a = document_a.copy()
+        candidate_b = document_b.copy()
+        if ignore_oid:
+            candidate_a.pop("_id", None)
+            candidate_b.pop("_id", None)
+
         a_json = json_util.dumps(
-            document_a,
+            candidate_a,
             json_options=json_util.CANONICAL_JSON_OPTIONS,
             indent=2,
             sort_keys=True,
         )
         b_json = json_util.dumps(
-            document_b,
+            candidate_b,
             json_options=json_util.CANONICAL_JSON_OPTIONS,
             indent=2,
             sort_keys=True,
@@ -164,7 +173,9 @@ def diff_collections(
             show_default=False,
             rich_help_panel="Collection B",
         )] = None,
-        include_id: Annotated[bool, typer.Option(
+        include_oid: Annotated[bool, typer.Option(
+            "--include-oid",
+            "--include-id",  # support this legacy flag (a misnomer) for backwards compatibility
             help="Includes the `_id` field when comparing documents.",
         )] = False,
 ) -> None:
@@ -208,10 +219,6 @@ def diff_collections(
             collection = database[collection_name]
             collections.append(collection)
 
-    # Define a MongoDB query projection based upon whether the user wants us to consider the `_id`
-    # field when comparing documents or not.
-    projection = {"_id": 1 if include_id else  0}
-
     # Make more intuitive aliases for the collections.
     collection_a = collections[0]
     collection_b = collections[1]
@@ -232,7 +239,7 @@ def diff_collections(
         #
         task_a = progress.add_task("Comparing collections, using collection A as reference",
                                    total=num_documents_in_collection_a)
-        for document_a in collection_a.find({}, projection):
+        for document_a in collection_a.find({}):
 
             # Get the identifier value from the document from collection A.
             if identifier_field_name_a in document_a:
@@ -244,7 +251,7 @@ def diff_collections(
                 )
 
             # Check whether a document having the same identifier value exists in collection B.
-            document_b = collection_b.find_one({identifier_field_name_b: identifier_value_a}, projection)
+            document_b = collection_b.find_one({identifier_field_name_b: identifier_value_a})
 
             # If such a document exists in collection B, compare it to the one from collection A.
             if document_b is not None:
@@ -252,6 +259,7 @@ def diff_collections(
                 are_the_same = comparator.compare_documents(
                     document_a=document_a,
                     document_b=document_b,
+                    ignore_oid=not include_oid,
                 )
 
                 if not are_the_same:
@@ -265,6 +273,7 @@ def diff_collections(
                         document_b=document_b,
                         label_a=f"Collection A: {identifier_field_name_a}={identifier_value_a!r}",
                         label_b=f"Collection B: {identifier_field_name_b}={identifier_value_b!r}",
+                        ignore_oid=not include_oid,
                     )
                     for line in diff_lines:
                         if line.startswith("+"):
