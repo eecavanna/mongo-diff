@@ -1,5 +1,4 @@
 from difflib import unified_diff
-from pathlib import Path
 from typing import Iterator, Optional
 
 import dictdiffer
@@ -88,7 +87,7 @@ class Comparator():
         label_b: str,
     ) -> Iterator[str]:
         r"""
-        Returns an iterator that yiels the lines of a Git-like diff of the documents'
+        Returns an iterator that yields the lines of a Git-like diff of the documents'
         canonical JSON representations.
 
         Reference: https://pymongo.readthedocs.io/en/stable/api/bson/json_util.html
