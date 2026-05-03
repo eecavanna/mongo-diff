@@ -124,11 +124,23 @@ export MONGO_URI_B='mongodb://username:password@host.example.com:22222'
 
 As the tool compares the collections, it will display the **differences** it detects; like this:
 
-```console
-Documents differ between collections: id=1,id=1. Differences: [('change', 'name', ('Joe', 'Joseph'))]
-Document exists in collection A only: id=2
-Document exists in collection A only: id=4
-Document exists in collection B only: id=5
+```diff
+Document differs between collections:
+--- Collection A: id='x:food-00001'
++++ Collection B: id='x:food-00001'
+@@ -13,7 +13,7 @@
+       "type": "food"
+     }
+   ],
+-  "name": "Salmon",
++  "name": "Salmon Fillet",
+   "vendor": "Alaskan Foods",
+   "vendorCountry": "USA",
+   "vendorRegion": "Alaska",
+
+Document exists in collection A only: id='x:food-00002'
+Document exists in collection A only: id='x:food-00003'
+Document exists in collection B only: id='x:food-00004'
 ```
 
 When the tool finishes comparing the collections, it will display a **summary** of the result; like this:
