@@ -1,5 +1,6 @@
 from difflib import unified_diff
-from typing import Optional
+from pathlib import Path
+from typing import Iterator, Optional
 
 import dictdiffer
 import typer
@@ -66,6 +67,53 @@ class Result:
                                        condition=self.num_documents_that_differ_across_collections > 0,
                                        color="red"))
         return table
+
+
+class Comparator():
+    @staticmethod
+    def compare_documents(document_a: dict, document_b: dict) -> bool:
+        r"""
+        Returns `True` if the documents have the same fields and values as one another; otherwise `False`.
+        """
+
+        differences_generator = dictdiffer.diff(document_a, document_b)
+        differences: list[tuple] = list(differences_generator)
+        return len(differences) == 0
+
+    @staticmethod
+    def generate_diff(
+        document_a: dict,
+        document_b: dict,
+        label_a: str,
+        label_b: str,
+    ) -> Iterator[str]:
+        r"""
+        Returns an iterator that yiels the lines of a Git-like diff of the documents'
+        canonical JSON representations.
+
+        Reference: https://pymongo.readthedocs.io/en/stable/api/bson/json_util.html
+        """
+
+        a_json = json_util.dumps(
+            document_a,
+            json_options=json_util.CANONICAL_JSON_OPTIONS,
+            indent=2,
+            sort_keys=True,
+        )
+        b_json = json_util.dumps(
+            document_b,
+            json_options=json_util.CANONICAL_JSON_OPTIONS,
+            indent=2,
+            sort_keys=True,
+        )
+        diff_lines = unified_diff(
+            a_json.splitlines(),
+            b_json.splitlines(),
+            fromfile=label_a,
+            tofile=label_b,
+            lineterm="",
+        )
+        return diff_lines
 
 
 @app.command("diff-collections")
@@ -175,6 +223,7 @@ def diff_collections(
     report = Result(num_documents_in_collection_a, num_documents_in_collection_b)
 
     # Set up the progress bar functionality.
+    console.print()
     with Progress(console=console) as progress:
         # Compare the collections, using collection A as the reference.
         #
@@ -200,36 +249,23 @@ def diff_collections(
 
             # If such a document exists in collection B, compare it to the one from collection A.
             if document_b is not None:
-                differences_generator = dictdiffer.diff(document_a, document_b)
-                differences = list(differences_generator)
-                if len(differences) > 0:
+                comparator = Comparator()
+                are_the_same = comparator.compare_documents(
+                    document_a=document_a,
+                    document_b=document_b,
+                )
+
+                if not are_the_same:
                     report.num_documents_that_differ_across_collections += 1
                     identifier_value_b = document_b[identifier_field_name_b]
-                    console.print(f"Documents differ between collections: "
-                                  f"{identifier_field_name_a}={identifier_value_a},"
-                                  f"{identifier_field_name_b}={identifier_value_b}. "
-                                  f"Differences: {differences}")
+                    console.print("Document differs between collections:")
 
                     # Display a colorized diff of the two documents' canonical JSON representations.
-                    # Docs: https://pymongo.readthedocs.io/en/stable/api/bson/json_util.html
-                    a_json = json_util.dumps(
-                        document_a,
-                        json_options=json_util.CANONICAL_JSON_OPTIONS,
-                        indent=2,
-                        sort_keys=True,
-                    )
-                    b_json = json_util.dumps(
-                        document_b,
-                        json_options=json_util.CANONICAL_JSON_OPTIONS,
-                        indent=2,
-                        sort_keys=True,
-                    )
-                    diff_lines = unified_diff(
-                        a_json.splitlines(),
-                        b_json.splitlines(),
-                        fromfile=f"Collection A: {identifier_field_name_a}={identifier_value_a}",
-                        tofile=f"Collection B: {identifier_field_name_b}={identifier_value_b}",
-                        lineterm="",
+                    diff_lines = comparator.generate_diff(
+                        document_a=document_a,
+                        document_b=document_b,
+                        label_a=f"Collection A: {identifier_field_name_a}={identifier_value_a!r}",
+                        label_b=f"Collection B: {identifier_field_name_b}={identifier_value_b!r}",
                     )
                     for line in diff_lines:
                         if line.startswith("+"):
@@ -238,11 +274,15 @@ def diff_collections(
                             console.print(line, style="red", highlight=False)
                         else:
                             console.print(line, highlight=False)
+                    console.print()
 
             else:
                 report.num_documents_in_collection_a_only += 1
-                console.print(f"Document exists in collection A only: "
-                              f"{identifier_field_name_a}={document_a[identifier_field_name_a]}")
+                console.print(
+                    f"Document exists in collection A only: "
+                    f"[red]{identifier_field_name_a}={identifier_value_a!r}[/red]",
+                    highlight=False,
+                )
 
             # Advance the progress bar by 1.
             progress.update(task_a, advance=1)
@@ -274,8 +314,11 @@ def diff_collections(
             # If such a document exists in collection B, compare it to the one from collection A.
             if document_a is None:
                 report.num_documents_in_collection_b_only += 1
-                console.print(f"Document exists in collection B only: "
-                              f"{identifier_field_name_b}={document_b[identifier_field_name_b]}")
+                console.print(
+                    f"Document exists in collection B only: "
+                    f"[green]{identifier_field_name_b}={identifier_value_b!r}[/green]",
+                    highlight=False,
+                )
 
             # Advance the progress bar by 1.
             progress.update(task_b, advance=1)
