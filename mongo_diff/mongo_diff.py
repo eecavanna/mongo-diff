@@ -278,11 +278,11 @@ def diff_collections(
                     )
                     for line in diff_lines:
                         if line.startswith("+"):
-                            console.print(line, style="green", highlight=False)
+                            console.print(line, style="green", highlight=False, markup=False)
                         elif line.startswith("-"):
-                            console.print(line, style="red", highlight=False)
+                            console.print(line, style="red", highlight=False, markup=False)
                         else:
-                            console.print(line, highlight=False)
+                            console.print(line, highlight=False, markup=False)
                     console.print()
 
             else:
