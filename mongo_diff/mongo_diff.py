@@ -31,7 +31,7 @@ class Result:
         self.identifiers_of_documents_in_collection_a_only: list[Any] = []
         self.identifiers_of_documents_in_collection_b_only: list[Any] = []
         self.identifiers_of_differing_documents: list[Any] = []
-        self.diff_lines_of_differing_documents: dict[str, list[str]] = {}
+        self.diff_lines_of_differing_documents: dict[Any, list[str]] = {}
     
     @property
     def num_documents_in_collection_a_only(self) -> int:
@@ -254,7 +254,7 @@ class Comparator():
         Compares one MongoDB collection with another one.
 
         Identifies documents that (based on their identifier field) exist in one collection and not
-        in the other collection. Also identifiers differences that exist between documents that
+        in the other collection. Also identifies differences that exist between documents that
         (based on their identifier field) exist in both collections, but do not match one another.
 
         :param collection_a: One collection.
