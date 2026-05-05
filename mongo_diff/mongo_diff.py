@@ -1,4 +1,5 @@
 from difflib import unified_diff
+from types import SimpleNamespace
 from typing import Any, Iterator, Optional
 
 import dictdiffer
@@ -18,10 +19,6 @@ app = typer.Typer(
     help="Compare two MongoDB collections.",
     add_completion=False,  # hides the shell completion options from `--help` output
 )
-
-# Instantiate a Rich console for fancy console output.
-# Reference: https://rich.readthedocs.io/en/stable/console.html
-console = Console()
 
 
 class Result:
@@ -121,9 +118,18 @@ class Result:
 class Comparator():
     """Compares MongoDB collections with one another."""
 
-    def __init__(self, console: Console) -> None:
-        """Initializes the comparator with the console on which you want progress to be displayed."""
-        self.console = console
+    def __init__(self, console: Console | None) -> None:
+        """
+        Initializes the comparator with the Rich `Console` instance, if any, onto which you want the
+        comparator to print progress messages.
+        """
+
+        if isinstance(console, Console):
+            self.console = console
+        else:
+            # Use a placeholder class whose `print` method does nothing.
+            # Docs: https://docs.python.org/3/library/types.html#types.SimpleNamespace
+            self.console = SimpleNamespace(print=lambda *args, **kwargs: None)
 
     @staticmethod
     def compare_documents(document_a: dict, document_b: dict, ignore_oid: bool = False) -> bool:
@@ -269,7 +275,10 @@ class Comparator():
 
         # Set up the progress bar functionality.
         self.console.print()
-        with Progress(console=console) as progress:
+        with Progress(
+            console=None if not isinstance(self.console, Console) else self.console,
+            disable=not isinstance(self.console, Console),
+        ) as progress:
             # Compare the collections, using collection A as the reference.
             #
             # Note: In this stage, we get each document from collection A and check whether it exists in collection B.
@@ -477,6 +486,11 @@ def diff_collections(
 
     Those collections can reside in either a single database or two separate databases (even across servers).
     """
+
+    # Instantiate a Rich console for fancy console output.
+    # Reference: https://rich.readthedocs.io/en/stable/console.html
+    console = Console()
+
     # For any collection B-related options that were omitted, use the values that were specified for collection A.
     database_name_b = database_name_a if database_name_b is None else database_name_b
     collection_name_b = collection_name_a if collection_name_b is None else collection_name_b
