@@ -62,8 +62,9 @@ At the time of this writing, the tool's `--help` snippet is:
  databases (even across servers).
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --include-oid,--include-id          Includes the `_id` field when comparing  │
-│                                     documents.                               │
+│ --include-oid,--include-id          Include the `_id` field when comparing   │
+│                                     documents (`--include-id` is             │
+│                                     deprecated).                             │
 │ --help                              Show this message and exit.              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Collection A ───────────────────────────────────────────────────────────────╮
@@ -79,7 +80,9 @@ At the time of this writing, the tool's `--help` snippet is:
 │    --identifier-field-name-a        TEXT  Name of the field of each document │
 │                                           in collection A to use to identify │
 │                                           a corresponding document in        │
-│                                           collection B.                      │
+│                                           collection B. The values in this   │
+│                                           field must be unique within each   │
+│                                           collection.                        │
 │                                           [default: id]                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Collection B ───────────────────────────────────────────────────────────────╮
@@ -98,7 +101,9 @@ At the time of this writing, the tool's `--help` snippet is:
 │                                        collection B to use to identify a     │
 │                                        corresponding document in collection  │
 │                                        A (if different from that specified   │
-│                                        for collection A).                    │
+│                                        for collection A). The values in this │
+│                                        field must be unique within each      │
+│                                        collection.                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
