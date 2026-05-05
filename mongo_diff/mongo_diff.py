@@ -118,7 +118,7 @@ class Result:
 class Comparator():
     """Compares MongoDB collections with one another."""
 
-    def __init__(self, console: Console | None) -> None:
+    def __init__(self, console: Console | None = None) -> None:
         """
         Initializes the comparator with the Rich `Console` instance, if any, onto which you want the
         comparator to print progress messages.
