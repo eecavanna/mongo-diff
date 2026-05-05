@@ -4,6 +4,7 @@ from typing import Iterator, Optional
 import dictdiffer
 import typer
 from typing_extensions import Annotated
+from pymongo.collection import Collection
 from pymongo import MongoClient, timeout
 from bson import json_util
 from rich.console import Console
@@ -70,6 +71,12 @@ class Result:
 
 
 class Comparator():
+    """Compares MongoDB collections with one another."""
+
+    def __init__(self, console: Console) -> None:
+        """Initializes the comparator with the console on which you want progress to be displayed."""
+        self.console = console
+
     @staticmethod
     def compare_documents(document_a: dict, document_b: dict, ignore_oid: bool = False) -> bool:
         r"""
@@ -180,6 +187,166 @@ class Comparator():
             lineterm="",
         )
         return diff_lines
+
+    def compare_collections(
+        self,
+        collection_a: Collection,
+        collection_b: Collection,
+        identifier_field_name_a: str,
+        identifier_field_name_b: str,
+        ignore_oid: bool,
+    ) -> Result:
+        """
+        Compares one MongoDB collection with another one.
+
+        Identifies documents that (based on their identifier field) exist in one collection and not
+        in the other collection. Also identifiers differences that exist between documents that
+        (based on their identifier field) exist in both collections, but do not match one another.
+
+        :param collection_a: One collection.
+        :param collection_b: The other collection.
+        :param identifier_field_name_a: The name of the field of each document in collection A to
+                                        use to identify a corresponding document in collection B.
+        :param identifier_field_name_b: The name of the field of each document in collection B to
+                                        use to identify a corresponding document in collection A.
+        :param ignore_oid: Whether to ignore the `_id` field when comparing documents.
+
+        :returns: A `Result` instance containing the result of the comparison.
+        """
+
+        # Initialize the report we will return.
+        num_documents_in_collection_a = collection_a.count_documents({})
+        num_documents_in_collection_b = collection_b.count_documents({})
+        report = Result(num_documents_in_collection_a, num_documents_in_collection_b)
+
+        # Set up the progress bar functionality.
+        self.console.print()
+        with Progress(console=console) as progress:
+            # Compare the collections, using collection A as the reference.
+            #
+            # Note: In this stage, we get each document from collection A and check whether it exists in collection B.
+            #       If it does, we compare the two documents and display any differences. If it doesn't, we display the
+            #       identifier value from collection A (i.e. the identifier value we failed to find in collection B).
+            #
+            task_a = progress.add_task("Comparing collections, using collection A as reference",
+                                    total=num_documents_in_collection_a)
+            for document_a in collection_a.find({}):
+
+                # Get the identifier value from the document from collection A.
+                if identifier_field_name_a in document_a:
+                    identifier_value_a = document_a[identifier_field_name_a]
+                else:
+                    raise ValueError(
+                        f"Document from collection A lacks identifier field: '{identifier_field_name_a}'. "
+                        f"Document: {document_a}"
+                    )
+
+                # Check whether a document having the same identifier value exists in collection B.
+                #
+                # Note: If the identifier value from document A was `None`, we use a special filter
+                #       (when checking collection B) to disambiguate between documents in which the
+                #       identifier field contains `None` and documents in which the identifier field
+                #       does not exist at all. MongoDB does not distinguish between those two cases when
+                #       we use a basic filter like `{field_name: None}`.
+                #
+                filter_b: dict = {identifier_field_name_b: identifier_value_a}
+                if identifier_value_a is None:
+                    filter_b = make_pymongo_filter_for_field_having_value_null(identifier_field_name_b)
+                document_b = collection_b.find_one(filter=filter_b)
+
+                # If such a document exists in collection B, compare it to the one from collection A.
+                if document_b is not None:
+                    are_the_same = self.compare_documents(
+                        document_a=document_a,
+                        document_b=document_b,
+                        ignore_oid=ignore_oid,
+                    )
+
+                    if not are_the_same:
+                        report.num_documents_that_differ_across_collections += 1
+                        identifier_value_b = document_b[identifier_field_name_b]
+                        self.console.print("Document differs between collections:")
+
+                        # Display a colorized diff of the two documents' canonical JSON representations.
+                        diff_lines = self.generate_diff(
+                            document_a=document_a,
+                            document_b=document_b,
+                            label_a=f"Collection A: {identifier_field_name_a}={identifier_value_a!r}",
+                            label_b=f"Collection B: {identifier_field_name_b}={identifier_value_b!r}",
+                            ignore_oid=ignore_oid,
+                        )
+                        for line in diff_lines:
+                            if line.startswith("+"):
+                                self.console.print(line, style="green", highlight=False, markup=False)
+                            elif line.startswith("-"):
+                                self.console.print(line, style="red", highlight=False, markup=False)
+                            else:
+                                self.console.print(line, highlight=False, markup=False)
+                        self.console.print()
+
+                else:
+                    report.num_documents_in_collection_a_only += 1
+                    self.console.print(
+                        f"Document exists in collection A only: "
+                        f"[red]{escape(identifier_field_name_a)}={escape(repr(identifier_value_a))}[/red]",
+                        highlight=False,
+                    )
+
+                # Advance the progress bar by 1.
+                progress.update(task_a, advance=1)
+
+            # Compare the collections, using collection B as the reference.
+            #
+            # Note: In this stage, we get each document from collection B and check whether it exists in collection A.
+            #       If it does, we do nothing; since we will have already checked whether the two documents match during
+            #       the previous stage (note that this is done under the assumption that the contents of the collections
+            #       do not change while this script is running). If it doesn't exist in collection A, we display the
+            #       identifier value from collection B (i.e. the identifier value we failed to find in collection A).
+            #
+            task_b = progress.add_task("Comparing collections, using collection B as reference",
+                                    total=num_documents_in_collection_b)
+            for document_b in collection_b.find():
+
+                # Get the identifier value from the document from collection B.
+                if identifier_field_name_b in document_b:
+                    identifier_value_b = document_b[identifier_field_name_b]
+                else:
+                    raise ValueError(
+                        f"Document from collection B lacks identifier field: {identifier_field_name_b}. "
+                        f"Document: {document_b}"
+                    )
+
+                # Check whether a document having the same identifier value exists in collection A.
+                #
+                # Note: If the identifier value from document B was `None`, we use a special filter
+                #       (when checking collection A) to disambiguate between documents in which the
+                #       identifier field contains `None` and documents in which the identifier field
+                #       does not exist at all. MongoDB does not distinguish between those two cases when
+                #       we use a basic filter like `{field_name: None}`.
+                #
+                filter_a: dict = {identifier_field_name_a: identifier_value_b}
+                if identifier_value_b is None:
+                    filter_a = make_pymongo_filter_for_field_having_value_null(identifier_field_name_a)
+                document_a = collection_a.find_one(filter=filter_a)
+
+                # If such a document exists in collection B, compare it to the one from collection A.
+                if document_a is None:
+                    report.num_documents_in_collection_b_only += 1
+                    self.console.print(
+                        f"Document exists in collection B only: "
+                        f"[green]{escape(identifier_field_name_b)}={escape(repr(identifier_value_b))}[/green]",
+                        highlight=False,
+                    )
+
+                # Advance the progress bar by 1.
+                progress.update(task_b, advance=1)
+
+        # Display a table summarizing the result.
+        self.console.print()
+        self.console.print(report.get_summary_table())
+        self.console.print()
+
+        return report
 
 
 def make_pymongo_filter_for_field_having_value_null(field_name: str) -> dict:
@@ -302,138 +469,15 @@ def diff_collections(
     collection_a = collections[0]
     collection_b = collections[1]
 
-    # Initialize the report we will display later.
-    num_documents_in_collection_a = collection_a.count_documents({})
-    num_documents_in_collection_b = collection_b.count_documents({})
-    report = Result(num_documents_in_collection_a, num_documents_in_collection_b)
-
-    # Set up the progress bar functionality.
-    console.print()
-    with Progress(console=console) as progress:
-        # Compare the collections, using collection A as the reference.
-        #
-        # Note: In this stage, we get each document from collection A and check whether it exists in collection B.
-        #       If it does, we compare the two documents and display any differences. If it doesn't, we display the
-        #       identifier value from collection A (i.e. the identifier value we failed to find in collection B).
-        #
-        task_a = progress.add_task("Comparing collections, using collection A as reference",
-                                   total=num_documents_in_collection_a)
-        for document_a in collection_a.find({}):
-
-            # Get the identifier value from the document from collection A.
-            if identifier_field_name_a in document_a:
-                identifier_value_a = document_a[identifier_field_name_a]
-            else:
-                raise ValueError(
-                    f"Document from collection A lacks identifier field: '{identifier_field_name_a}'. "
-                    f"Document: {document_a}"
-                )
-
-            # Check whether a document having the same identifier value exists in collection B.
-            #
-            # Note: If the identifier value from document A was `None`, we use a special filter
-            #       (when checking collection B) to disambiguate between documents in which the
-            #       identifier field contains `None` and documents in which the identifier field
-            #       does not exist at all. MongoDB does not distinguish between those two cases when
-            #       we use a basic filter like `{field_name: None}`.
-            #
-            filter_b: dict = {identifier_field_name_b: identifier_value_a}
-            if identifier_value_a is None:
-                filter_b = make_pymongo_filter_for_field_having_value_null(identifier_field_name_b)
-            document_b = collection_b.find_one(filter=filter_b)
-
-            # If such a document exists in collection B, compare it to the one from collection A.
-            if document_b is not None:
-                comparator = Comparator()
-                are_the_same = comparator.compare_documents(
-                    document_a=document_a,
-                    document_b=document_b,
-                    ignore_oid=not include_oid,
-                )
-
-                if not are_the_same:
-                    report.num_documents_that_differ_across_collections += 1
-                    identifier_value_b = document_b[identifier_field_name_b]
-                    console.print("Document differs between collections:")
-
-                    # Display a colorized diff of the two documents' canonical JSON representations.
-                    diff_lines = comparator.generate_diff(
-                        document_a=document_a,
-                        document_b=document_b,
-                        label_a=f"Collection A: {identifier_field_name_a}={identifier_value_a!r}",
-                        label_b=f"Collection B: {identifier_field_name_b}={identifier_value_b!r}",
-                        ignore_oid=not include_oid,
-                    )
-                    for line in diff_lines:
-                        if line.startswith("+"):
-                            console.print(line, style="green", highlight=False, markup=False)
-                        elif line.startswith("-"):
-                            console.print(line, style="red", highlight=False, markup=False)
-                        else:
-                            console.print(line, highlight=False, markup=False)
-                    console.print()
-
-            else:
-                report.num_documents_in_collection_a_only += 1
-                console.print(
-                    f"Document exists in collection A only: "
-                    f"[red]{escape(identifier_field_name_a)}={escape(repr(identifier_value_a))}[/red]",
-                    highlight=False,
-                )
-
-            # Advance the progress bar by 1.
-            progress.update(task_a, advance=1)
-
-        # Compare the collections, using collection B as the reference.
-        #
-        # Note: In this stage, we get each document from collection B and check whether it exists in collection A.
-        #       If it does, we do nothing; since we will have already checked whether the two documents match during
-        #       the previous stage (note that this is done under the assumption that the contents of the collections
-        #       do not change while this script is running). If it doesn't exist in collection A, we display the
-        #       identifier value from collection B (i.e. the identifier value we failed to find in collection A).
-        #
-        task_b = progress.add_task("Comparing collections, using collection B as reference",
-                                   total=num_documents_in_collection_b)
-        for document_b in collection_b.find():
-
-            # Get the identifier value from the document from collection B.
-            if identifier_field_name_b in document_b:
-                identifier_value_b = document_b[identifier_field_name_b]
-            else:
-                raise ValueError(
-                    f"Document from collection B lacks identifier field: {identifier_field_name_b}. "
-                    f"Document: {document_b}"
-                )
-
-            # Check whether a document having the same identifier value exists in collection A.
-            #
-            # Note: If the identifier value from document B was `None`, we use a special filter
-            #       (when checking collection A) to disambiguate between documents in which the
-            #       identifier field contains `None` and documents in which the identifier field
-            #       does not exist at all. MongoDB does not distinguish between those two cases when
-            #       we use a basic filter like `{field_name: None}`.
-            #
-            filter_a: dict = {identifier_field_name_a: identifier_value_b}
-            if identifier_value_b is None:
-                filter_a = make_pymongo_filter_for_field_having_value_null(identifier_field_name_a)
-            document_a = collection_a.find_one(filter=filter_a)
-
-            # If such a document exists in collection B, compare it to the one from collection A.
-            if document_a is None:
-                report.num_documents_in_collection_b_only += 1
-                console.print(
-                    f"Document exists in collection B only: "
-                    f"[green]{escape(identifier_field_name_b)}={escape(repr(identifier_value_b))}[/green]",
-                    highlight=False,
-                )
-
-            # Advance the progress bar by 1.
-            progress.update(task_b, advance=1)
-
-    # Display a table summarizing the result.
-    console.print()
-    console.print(report.get_summary_table())
-    console.print()
+    # Compare the collections with one another.
+    comparator = Comparator(console=console)
+    _ = comparator.compare_collections(
+        collection_a=collection_a,
+        collection_b=collection_b,
+        identifier_field_name_a=identifier_field_name_a,
+        identifier_field_name_b=identifier_field_name_b,
+        ignore_oid=not include_oid,
+    )
 
 
 if __name__ == "__main__":
