@@ -1,5 +1,5 @@
 from difflib import unified_diff
-from typing import Iterator, Optional
+from typing import Any, Iterator, Optional
 
 import dictdiffer
 import typer
@@ -11,6 +11,7 @@ from rich.console import Console
 from rich.markup import escape
 from rich.table import Table, Column
 from rich.progress import Progress
+from rich.text import Text
 from rich import box
 
 app = typer.Typer(
@@ -28,16 +29,63 @@ class Result:
 
     def __init__(self, num_documents_in_collection_a: int, num_documents_in_collection_b: int) -> None:
         r"""Initializes the result."""
-        self.num_documents_in_collection_a = num_documents_in_collection_a
-        self.num_documents_in_collection_b = num_documents_in_collection_b
-        self.num_documents_in_collection_a_only = 0
-        self.num_documents_in_collection_b_only = 0
-        self.num_documents_that_differ_across_collections = 0
+        self.num_documents_in_collection_a: int = num_documents_in_collection_a
+        self.num_documents_in_collection_b: int = num_documents_in_collection_b
+        self.identifiers_of_documents_in_collection_a_only: list[Any] = []
+        self.identifiers_of_documents_in_collection_b_only: list[Any] = []
+        self.identifiers_of_differing_documents: list[Any] = []
+        self.diff_lines_of_differing_documents: dict[str, list[str]] = {}
+    
+    @property
+    def num_documents_in_collection_a_only(self) -> int:
+        return len(self.identifiers_of_documents_in_collection_a_only)
+    
+    @property
+    def num_documents_in_collection_b_only(self) -> int:
+        return len(self.identifiers_of_documents_in_collection_b_only)
+    
+    @property
+    def num_differing_documents(self) -> int:
+        return len(self.identifiers_of_differing_documents)
 
     @staticmethod
     def colorize_if(raw_string: str, condition: bool, color: str) -> str:
         r"""Surrounds the raw string with Rich color tags if the condition is true."""
         return f"[{color}]{raw_string}[/{color}]" if condition else raw_string
+
+    @staticmethod
+    def colorize_diff_lines(diff_lines: list[str]) -> list[Text]:
+        r"""
+        Returns a list of Rich `Text` instances corresponding to the diff lines, with colorization.
+        The caller can then display those `Text` instances via plain `console.print()` calls.
+
+        References:
+        - https://rich.readthedocs.io/en/latest/text.html
+        - https://rich.readthedocs.io/en/latest/protocol.html
+        """
+
+        colorized_lines: list[Text] = []
+        for line in diff_lines:
+            if line.startswith("-"):
+                colorized_lines.append(Text(line, style="red"))
+            elif line.startswith("+"):
+                colorized_lines.append(Text(line, style="green"))
+            else:
+                colorized_lines.append(Text(line))
+        return colorized_lines
+
+    def get_all_colorized_diff_lines(self) -> list[Text]:
+        r"""
+        Returns a list of Rich `Text` instances that, together, represent the diffs of all differing
+        documents, with colorization.
+        """
+
+        colorized_lines: list[Text] = []
+        for diff_lines in self.diff_lines_of_differing_documents.values():
+            colorized_lines_part = self.colorize_diff_lines(diff_lines=diff_lines)
+            colorized_lines.extend(colorized_lines_part)
+            colorized_lines.append(Text(""))
+        return colorized_lines
 
     def get_summary_table(self, title: Optional[str] = "Result") -> Table:
         r"""
@@ -64,8 +112,8 @@ class Result:
                                        color="red"))
         table.add_section()
         table.add_row("Documents that differ between collections",
-                      self.colorize_if(raw_string=str(self.num_documents_that_differ_across_collections),
-                                       condition=self.num_documents_that_differ_across_collections > 0,
+                      self.colorize_if(raw_string=str(self.num_differing_documents),
+                                       condition=self.num_differing_documents > 0,
                                        color="red"))
         return table
 
@@ -263,29 +311,31 @@ class Comparator():
                     )
 
                     if not are_the_same:
-                        report.num_documents_that_differ_across_collections += 1
                         identifier_value_b = document_b[identifier_field_name_b]
                         self.console.print("Document differs between collections:")
 
-                        # Display a colorized diff of the two documents' canonical JSON representations.
-                        diff_lines = self.generate_diff(
+                        # Generate a diff of the two documents' canonical JSON representations.
+                        diff_lines: Iterator[str] = self.generate_diff(
                             document_a=document_a,
                             document_b=document_b,
                             label_a=f"Collection A: {identifier_field_name_a}={identifier_value_a!r}",
                             label_b=f"Collection B: {identifier_field_name_b}={identifier_value_b!r}",
                             ignore_oid=ignore_oid,
                         )
-                        for line in diff_lines:
-                            if line.startswith("+"):
-                                self.console.print(line, style="green", highlight=False, markup=False)
-                            elif line.startswith("-"):
-                                self.console.print(line, style="red", highlight=False, markup=False)
-                            else:
-                                self.console.print(line, highlight=False, markup=False)
+                        report.identifiers_of_differing_documents.append(identifier_value_a)
+                        report.diff_lines_of_differing_documents[identifier_value_a] = list(diff_lines)
+
+                        # Display a colorized version of the diff.
+                        # Note: We reference our list, since we will have "exhausted" the `diff_lines` iterator.
+                        colorized_lines = report.colorize_diff_lines(
+                            diff_lines=report.diff_lines_of_differing_documents[identifier_value_a],
+                        )
+                        for line in colorized_lines:
+                            self.console.print(line)
                         self.console.print()
 
                 else:
-                    report.num_documents_in_collection_a_only += 1
+                    report.identifiers_of_documents_in_collection_a_only.append(identifier_value_a)
                     self.console.print(
                         f"Document exists in collection A only: "
                         f"[red]{escape(identifier_field_name_a)}={escape(repr(identifier_value_a))}[/red]",
@@ -331,7 +381,7 @@ class Comparator():
 
                 # If such a document exists in collection B, compare it to the one from collection A.
                 if document_a is None:
-                    report.num_documents_in_collection_b_only += 1
+                    report.identifiers_of_documents_in_collection_b_only.append(identifier_value_b)
                     self.console.print(
                         f"Document exists in collection B only: "
                         f"[green]{escape(identifier_field_name_b)}={escape(repr(identifier_value_b))}[/green]",
@@ -340,11 +390,6 @@ class Comparator():
 
                 # Advance the progress bar by 1.
                 progress.update(task_b, advance=1)
-
-        # Display a table summarizing the result.
-        self.console.print()
-        self.console.print(report.get_summary_table())
-        self.console.print()
 
         return report
 
@@ -390,7 +435,8 @@ def diff_collections(
         )],
         identifier_field_name_a: Annotated[str, typer.Option(
             help="Name of the field of each document in collection A "
-                 "to use to identify a corresponding document in collection B.",
+                 "to use to identify a corresponding document in collection B. "
+                 "The values in this field must be unique within each collection.",
             rich_help_panel="Collection A",
         )] = "id",
         mongo_uri_b: Annotated[Optional[str], typer.Option(
@@ -415,7 +461,8 @@ def diff_collections(
         identifier_field_name_b: Annotated[Optional[str], typer.Option(
             help="Name of the field of each document in collection B "
                  "to use to identify a corresponding document in collection A "
-                 "(if different from that specified for collection A).",
+                 "(if different from that specified for collection A)."
+                 "The values in this field must be unique within each collection.",
             show_default=False,
             rich_help_panel="Collection B",
         )] = None,
@@ -471,7 +518,7 @@ def diff_collections(
 
     # Compare the collections with one another.
     comparator = Comparator(console=console)
-    _ = comparator.compare_collections(
+    report = comparator.compare_collections(
         collection_a=collection_a,
         collection_b=collection_b,
         identifier_field_name_a=identifier_field_name_a,
@@ -479,6 +526,10 @@ def diff_collections(
         ignore_oid=not include_oid,
     )
 
+    # Display a table summarizing the result.
+    console.print()
+    console.print(report.get_summary_table())
+    console.print()
 
 if __name__ == "__main__":
     app()
