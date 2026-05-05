@@ -470,7 +470,7 @@ def diff_collections(
         identifier_field_name_b: Annotated[Optional[str], typer.Option(
             help="Name of the field of each document in collection B "
                  "to use to identify a corresponding document in collection A "
-                 "(if different from that specified for collection A)."
+                 "(if different from that specified for collection A). "
                  "The values in this field must be unique within each collection.",
             show_default=False,
             rich_help_panel="Collection B",
