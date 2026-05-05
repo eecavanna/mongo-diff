@@ -289,6 +289,9 @@ class Comparator():
                                     total=num_documents_in_collection_a)
             for document_a in collection_a.find({}):
 
+                # Get the `_id` value from the document from collection A.
+                oid_value_a = document_a["_id"]
+
                 # Get the identifier value from the document from collection A.
                 if identifier_field_name_a in document_a:
                     identifier_value_a = document_a[identifier_field_name_a]
@@ -331,14 +334,14 @@ class Comparator():
                             label_b=f"Collection B: {identifier_field_name_b}={identifier_value_b!r}",
                             ignore_oid=ignore_oid,
                         )
+                        diff_lines_list = list(diff_lines)  # exhausts the iterator
+
+                        # Update the report.
                         report.identifiers_of_differing_documents.append(identifier_value_a)
-                        report.diff_lines_of_differing_documents[identifier_value_a] = list(diff_lines)
+                        report.diff_lines_of_differing_documents[oid_value_a] = diff_lines_list
 
                         # Display a colorized version of the diff.
-                        # Note: We reference our list, since we will have "exhausted" the `diff_lines` iterator.
-                        colorized_lines = report.colorize_diff_lines(
-                            diff_lines=report.diff_lines_of_differing_documents[identifier_value_a],
-                        )
+                        colorized_lines = report.colorize_diff_lines(diff_lines=diff_lines_list)
                         for line in colorized_lines:
                             self.console.print(line)
                         self.console.print()
