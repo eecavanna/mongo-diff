@@ -218,14 +218,14 @@ uv run mongo-diff --help
 
 ### Run tests
 
-We currently only have a smattering of doctests in this codebase. You can run them via:
+We currently only have a smattering of doctests in this codebase. You can run them using [pytest](https://docs.pytest.org/en/stable/) (which is configured in `pyproject.toml` to run doctests automatically) via:
 
 ```shell
-uv run python -m doctest ./mongo_diff/mongo_diff.py
+uv run pytest
 ```
 
 We may eventually populate the `tests/` directory with a more exhaustive test suite,
-using [pytest](https://docs.pytest.org/en/stable/) and [mongomock](https://pypi.org/project/mongomock/).
+using `pytest` and [mongomock](https://pypi.org/project/mongomock/).
 
 ### Build package
 
