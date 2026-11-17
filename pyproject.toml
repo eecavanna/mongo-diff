@@ -36,7 +36,16 @@ dev = [
     # We use `black` to format source code.
     # Docs: https://black.readthedocs.io/en/stable/
     "black >= 24.1.1, < 27.0.0",
+    # We use `pytest` to run automated tests (including doctests).
+    # Docs: https://docs.pytest.org/en/stable/
+    "pytest >= 9.2.0, < 10.0.0",
 ]
+
+[tool.pytest.ini_options]
+# Configure `pytest` to run regular tests and doctests.
+# Reference: https://docs.pytest.org/en/stable/reference/customize.html#pyproject-toml
+addopts = ["--doctest-modules"]
+testpaths = ["mongo_diff", "tests"]
 
 [build-system]
 requires = ["uv_build >= 0.12.4, < 0.13.0"]
