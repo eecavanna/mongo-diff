@@ -1,10 +1,9 @@
 from difflib import unified_diff
 from types import SimpleNamespace
-from typing import Any, Iterator, Optional
+from typing import Annotated, Any, Iterator, Optional
 
 import dictdiffer
 import typer
-from typing_extensions import Annotated
 from pymongo.collection import Collection
 from pymongo import MongoClient, timeout
 from bson import json_util

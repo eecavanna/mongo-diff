@@ -1,38 +1,46 @@
-# Reference: https://python-poetry.org/docs/pyproject/
+# Reference: https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
 
-[tool.poetry]
+[project]
 name = "mongo-diff"
-version = "0.3.1"
+version = "0.3.2"
 description = "Compare MongoDB collections from the command line."
-authors = []
 readme = "README.md"
-repository = "https://github.com/eecavanna/mongo-diff"
-homepage = "https://github.com/eecavanna/mongo-diff"
-documentation = "https://github.com/eecavanna/mongo-diff"
+requires-python = ">= 3.10, < 4.0"
 keywords = ["mongodb", "mongo", "diff", "compare", "collection", "database", "data"]
+dependencies = [
+    # We use `typer` as a CLI framework.
+    # Docs: https://typer.tiangolo.com/
+    "typer >= 0.9.0, < 0.19.0",
+    # We use `rich` to format console output.
+    # Docs: https://rich.readthedocs.io/en/stable/index.html
+    "rich >= 13.7.0, < 14.0.0",
+    # We use `dictdiffer` to compare Python dictionaries.
+    # Docs: https://dictdiffer.readthedocs.io/en/latest/
+    "dictdiffer >= 0.9.0, < 0.10.0",
+    # We use `pymongo` to communicate with MongoDB servers.
+    # Docs: https://pymongo.readthedocs.io/en/stable/
+    "pymongo >= 4.6.1, < 5.0.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-# We use `typer` as a CLI framework (it's like "click", but with types).
-# Docs: https://typer.tiangolo.com/
-typer = ">=0.9.0,<0.19.0"
-# We use `rich` to format console output.
-# Docs: https://rich.readthedocs.io/en/stable/index.html
-rich = "^13.7.0"
-# We use `dictdiffer` to compare Python dictionaries.
-# Docs: https://dictdiffer.readthedocs.io/en/latest/
-dictdiffer = "^0.9.0"
-# We use `pymongo` to communicate with MongoDB servers.
-# Docs: (https://pymongo.readthedocs.io/en/stable/
-pymongo = "^4.6.1"
+[project.urls]
+Homepage = "https://github.com/eecavanna/mongo-diff"
+Documentation = "https://github.com/eecavanna/mongo-diff"
+Repository = "https://github.com/eecavanna/mongo-diff"
 
-[tool.poetry.group.dev.dependencies]
-black = ">=24.1.1,<27.0.0"
-
-[tool.poetry.scripts]
-# Reference: https://python-poetry.org/docs/pyproject#scripts
+[project.scripts]
+# Reference: https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#creating-executable-scripts
 mongo-diff = "mongo_diff.mongo_diff:app"
 
+[dependency-groups]
+dev = [
+    # We use `black` to format source code.
+    # Docs: https://black.readthedocs.io/en/stable/
+    "black >= 24.1.1, < 27.0.0",
+]
+
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build >= 0.12.4, < 0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""

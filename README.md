@@ -183,10 +183,10 @@ pipx uninstall mongo-diff
 
 ## Development
 
-We use [Poetry](https://python-poetry.org/) to both (a) manage dependencies and (b) publish packages to PyPI.
+We use [uv](https://docs.astral.sh/uv/) to both (a) manage dependencies and (b) build and publish packages to PyPI.
 
-- `pyproject.toml`: Configuration file for Poetry and other tools (was generated via `$ poetry init`)
-- `poetry.lock`: List of dependencies, direct and indirect (was generated via `$ poetry update`)
+- `pyproject.toml`: Configuration file for `uv` and other tools
+- `uv.lock`: Lockfile listing resolved dependencies, direct and indirect (generated via `$ uv lock`)
 
 ### Clone repository
 
@@ -195,36 +195,25 @@ git clone https://github.com/eecavanna/mongo-diff.git
 cd mongo-diff
 ```
 
-### Create virtual environment
+### Set up virtual environment and install dependencies
 
-Create a Poetry virtual environment and attach to its shell:
-
-```shell
-poetry shell
-```
-
-> You can see information about the Poetry virtual environment by running: `$ poetry env info`
-
-> You can detach from the Poetry virtual environment's shell by running: `$ exit`
-
-From now on, I'll refer to the Poetry virtual environment's shell as the "Poetry shell."
-
-### Install dependencies
-
-At the Poetry shell, install the project's dependencies:
+Create the `.venv` virtual environment and install the project's dependencies (including those in the `dev` group):
 
 ```shell
-poetry install
+uv sync
 ```
+
+> You can run commands inside the virtual environment using `$ uv run <command>` without activating it,
+> or activate it directly via `$ source .venv/bin/activate` (and detach via `$ deactivate`).
 
 ### Make changes
 
 Edit the tool's source code and documentation however you want.
 
-While editing the tool's source code, you can run the tool as you normally would in order to test things out.
+While editing the tool's source code, you can run the tool via `uv run` in order to test things out:
 
 ```shell
-mongo-diff --help
+uv run mongo-diff --help
 ```
 
 ### Run tests
@@ -232,7 +221,7 @@ mongo-diff --help
 We currently only have a smattering of doctests in this codebase. You can run them via:
 
 ```shell
-poetry run python -m doctest ./mongo_diff/mongo_diff.py
+uv run python -m doctest ./mongo_diff/mongo_diff.py
 ```
 
 We may eventually populate the `tests/` directory with a more exhaustive test suite,
@@ -248,29 +237,35 @@ times.
 You can update the version identifier of the package by running:
 
 ```shell
-poetry version {version_or_keyword}
+uv version {version}
 ```
 
-> You can replace `{version_or_keyword}` with either a literal version identifier (e.g. `0.1.1`) or a keyword
-> (e.g. `major`, `minor`, or `patch`). You can run `$ poetry version --help` to see the valid keywords.
+Or bump a version component with:
 
-Alternatively, you can manually edit a line in `pyproject.toml`:
+```shell
+uv version --bump {keyword}
+```
+
+> You can replace `{version}` with a literal version identifier (e.g. `0.3.2`) or `{keyword}` with a bump keyword
+> (e.g. `major`, `minor`, or `patch`). You can run `$ uv version --help` to see all options.
+
+Alternatively, you can manually edit the `version` line in `pyproject.toml` (and run `$ uv lock` to update `uv.lock`):
 
 ```diff
 - version = "0.1.0"
 + version = "0.1.1"
 ```
 
-#### Build package
+#### Build the package
 
-At the Poetry shell, build the package based upon the latest source code:
+Build the package based upon the latest source code:
 
 ```shell
-poetry build
+uv build
 ```
 
 > That will create both a
-> [source distribution](https://setuptools.pypa.io/en/latest/deprecated/distutils/sourcedist.html#creating-a-source-distribution)
+> [source distribution](https://packaging.python.org/en/latest/specifications/source-distribution-format/)
 > file (whose name ends with `.tar.gz`) and a
 > [wheel](https://packaging.python.org/en/latest/specifications/binary-distribution-format/#binary-distribution-format)
 > file (whose name ends with `.whl`) in the `dist` directory.
@@ -279,12 +274,12 @@ poetry build
 
 #### Set up PyPI credentials
 
-At the Poetry shell, create the following
-[environment variable](https://python-poetry.org/docs/repositories/#configuring-credentials),
-which Poetry will check for if credentials aren't specified to it in another way.
+Create the following
+[environment variable](https://docs.astral.sh/uv/guides/package/#publishing-your-package),
+which `uv` will check for if credentials aren't specified via CLI options:
 
 ```shell
-export POETRY_PYPI_TOKEN_PYPI="{api_token}"
+export UV_PUBLISH_TOKEN="{api_token}"
 ```
 
 > Replace `{api_token}` with a [PyPI API token](https://pypi.org/help/#apitoken) whose scope includes
@@ -292,10 +287,10 @@ export POETRY_PYPI_TOKEN_PYPI="{api_token}"
 
 #### Publish package to PyPI
 
-At the Poetry shell, publish the newly-built package to PyPI:
+Publish the newly-built package to PyPI:
 
 ```shell
-poetry publish
+uv publish
 ```
 
 At this point, people will be able to download and install the package from
